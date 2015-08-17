@@ -49,61 +49,48 @@ ijkplayer
 
 ### Before Build
 ```
-# install homebrew, git, yasm
-ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-brew install git
-brew install yasm
 
-# add these lines to your ~/.bash_profile or ~/.profile
+# add these lines to your ~/.bashrc or ~/.profile
 # export ANDROID_SDK=<your sdk path>
 # export ANDROID_NDK=<your ndk path>
 
-# on Cygwin
-# install git, make, yasm
+- For Ubuntu/Debian users: 把系统默认shell设置为bash
+```
+sudo dpkg-reconfigure dash
+# choose [No] to use bash
 ```
 
+# install git, yasm
+sudo apt-get install git
+sudo apt-get install yasm
+```
+
+- (下面这一步先跳过)
+- If you prefer less codec/format
 - If you prefer more codec/format
 ```
 cd config
 rm module.sh
-ln -s module-default.sh module.sh
-cd android/contrib
-# cd ios
-sh compile-ffmpeg clean
-```
-
-- If you prefer less codec/format for smaller binary size (by default)
-```
-cd config
-rm module.sh
 ln -s module-lite.sh module.sh
-cd android/contrib
-# cd ios
-sh compile-ffmpeg clean
-```
-
-- For Ubuntu/Debian users.
-```
-# choose [No] to use bash
-sudo dpkg-reconfigure dash
-```
-
-- If you'd like to share your config, pull request is welcome.
+#ln -s module-default.sh module.sh
 
 ### Build Android
 ```
-git clone https://github.com/Bilibili/ijkplayer.git ijkplayer-android
-cd ijkplayer-android
-git checkout -B latest k0.3.1
+git clone -b B_limao_1 https://github.com/limaokeji/ijkplayer.git ijkplayer_1
 
+cd ijkplayer_1
 ./init-android.sh
 
-cd android/contrib
+cd config
+rm module.sh
+ln -s module-default.sh module.sh
+
+cd ../android/contrib
 ./compile-ffmpeg.sh clean
-./compile-ffmpeg.sh all
+./compile-ffmpeg.sh armv7a
 
 cd ..
-./compile-ijk.sh all
+./compile-ijk.sh armv7a
 
 # Eclipse:
 #     File -> New -> Project -> Android Project from Existing Code
@@ -123,23 +110,6 @@ cd ..
 #     cd ijkplayer
 #     gradle
 
-```
-
-
-### Build iOS
-```
-git clone https://github.com/Bilibili/ijkplayer.git ijkplayer-ios
-cd ijkplayer-ios
-git checkout -B latest k0.3.1
-
-./init-ios.sh
-
-cd ios
-./compile-ffmpeg.sh clean
-./compile-ffmpeg.sh all
-
-# import ios/IJKMediaPlayer for MediaPlayer.framework-like interface (recommended)
-# open ios/IJKMediaDemo/IJKMediaDemo.xcodeproj with Xcode
 ```
 
 
