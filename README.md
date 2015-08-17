@@ -5,18 +5,11 @@ ijkplayer
 
 ### My Build Enviroment
 - Common
- - Mac OS X 10.10.3
+ - Windows 8.1 + VMware + Ubuntu 14.04 32位 (64位会出现一些莫名其妙的问题)
 - Android
- - [NDK r10e](http://developer.android.com/tools/sdk/ndk/index.html)
- - Android Studio 1.2.2
-- iOS
- - Xcode 6.3.2 (6D2105)
-- [HomeBrew](http://brew.sh)
- - ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
- - brew install git
-
-### Latest Changes
-- [NEWS.md](NEWS.md)
+ - [NDK r10b](http://developer.android.com/tools/sdk/ndk/index.html)
+ - Eclipse + ADT
+ - Android Studio 1.3
 
 ### Features
 - Common
@@ -37,10 +30,6 @@ ijkplayer
  - audio-output: AudioQueue, AudioUnit
  - hw decoder: VideoToolbox (iOS 8+)
 
-### TODO
-- iOS
- - api: AVFoundation-like
-
 ### NOT-ON-PLAN
 - obsolete platforms (Android: API-8 and below; iOS: below 5.1.1)
 - obsolete cpu: ARMv5, ARMv6, MIPS (I don't even have these types of devices…)
@@ -49,16 +38,14 @@ ijkplayer
 
 ### Before Build
 ```
-
 # add these lines to your ~/.bashrc or ~/.profile
 # export ANDROID_SDK=<your sdk path>
 # export ANDROID_NDK=<your ndk path>
 
 - For Ubuntu/Debian users: 把系统默认shell设置为bash
 ```
-sudo dpkg-reconfigure dash
 # choose [No] to use bash
-```
+sudo dpkg-reconfigure dash
 
 # install git, yasm
 sudo apt-get install git
@@ -68,7 +55,6 @@ sudo apt-get install yasm
 - (下面这一步先跳过)
 - If you prefer less codec/format
 - If you prefer more codec/format
-```
 cd config
 rm module.sh
 ln -s module-lite.sh module.sh
@@ -83,7 +69,7 @@ cd ijkplayer_1
 
 cd config
 rm module.sh
-ln -s module-default.sh module.sh
+ln -s module-lite.sh module.sh
 
 cd ../android/contrib
 ./compile-ffmpeg.sh clean
