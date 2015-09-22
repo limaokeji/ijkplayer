@@ -18,7 +18,7 @@
 # IJK_FFMPEG_UPSTREAM=git://git.videolan.org/ffmpeg.git
 IJK_FFMPEG_UPSTREAM=https://github.com/limaokeji/FFmpeg.git
 IJK_FFMPEG_FORK=https://github.com/limaokeji/FFmpeg.git
-IJK_FFMPEG_COMMIT=ijk-r0.2.4-dev_limao
+IJK_FFMPEG_COMMIT=ijk-r0.2.4-dev_limao # ∂‘”¶ B_limao_1
 IJK_FFMPEG_LOCAL_REPO=extra/ffmpeg
 
 set -e
