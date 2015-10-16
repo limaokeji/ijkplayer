@@ -1,0 +1,62 @@
+
+一、Before Build
+
+1、Add these lines to your ~/.bashrc or ~/.profile on Ubuntu
+export ANDROID_SDK=<your sdk path>
+export ANDROID_NDK=<your ndk path>
+
+2、For Ubuntu/Debian users: 把系统默认shell设置为bash
+# choose [No] to use bash
+sudo dpkg-reconfigure dash
+
+3、Install git, yasm
+sudo apt-get install git
+sudo apt-get install yasm
+
+ (下面这一步先跳过)
+- If you prefer less codec/format
+- If you prefer more codec/format
+cd config
+rm module.sh
+ln -s module-lite.sh module.sh
+#ln -s module-default.sh module.sh
+
+
+二、Build for Android
+
+git clone -b B_limao_2 https://github.com/limaokeji/ijkplayer.git ijkplayer_2
+
+cd ijkplayer_2
+./init-android.sh
+
+cd config
+rm module.sh
+ln -s module-lite.sh module.sh
+
+cd ../android/contrib
+./compile-ffmpeg.sh clean
+./compile-ffmpeg.sh armv7a
+
+cd ..
+./compile-ijk.sh armv7a
+
+
+三、Eclipse 编译 APK
+
+# Eclipse:
+#     File -> New -> Project -> Android Project from Existing Code
+#     Select android/ and import all project
+#
+# Android Studio:
+#     Open an existing Android Studio project
+#     Select android/ijkplayer/ and import
+#
+#     define ext block in your root build.gradle
+#     ext {
+#       compileSdkVersion = 22       // depending on your sdk version
+#       buildToolsVersion = "22.0.1" // depending on your build tools version
+#     }
+#
+# Gradle
+#     cd ijkplayer
+#     gradle
