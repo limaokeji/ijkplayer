@@ -2650,8 +2650,19 @@ static int read_thread(void *arg)
                 }
             }
         }
+
         pkt->flags = 0;
-        ret = av_read_frame(ic, pkt);
+
+        ret = av_read_frame(ic, pkt); // _test
+        //
+        // -112233
+        //
+        if (ret == -112233) {
+            av_log(ffp, AV_LOG_ERROR, "read_thread(): av_read_frame(): ret = -112233\n");
+            SDL_Delay(1000);
+            continue;
+        }
+        
         if (ret < 0) {
             if ((ret == AVERROR_EOF || avio_feof(ic->pb)) && !is->eof) {
                 if (is->video_stream >= 0)
