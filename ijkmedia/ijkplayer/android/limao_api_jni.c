@@ -16,6 +16,8 @@
 #include "ijksdl/ijksdl_log.h"
 #include "ijksdl/android/ijksdl_android_jni.h"
 
+//
+
 #define JNI_CLASS_PLAY_MANAGER "com/limaoso/phonevideo/playmanager/PlayManager"
 
 typedef struct limao_api_fields_t {
