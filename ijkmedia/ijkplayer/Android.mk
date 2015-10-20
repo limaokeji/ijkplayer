@@ -43,6 +43,10 @@ LOCAL_SRC_FILES += pipeline/ffpipeline_ffplay.c
 LOCAL_SRC_FILES += pipeline/ffpipenode_ffplay_vdec.c
 LOCAL_SRC_FILES += pipeline/ffpipenode_ffplay_vout.c
 
+# add by tiangui @ 20151020
+LOCAL_SRC_FILES += android/limao_api_jni.c
+LOCAL_SRC_FILES += android/limao_msg_loop.c
+
 LOCAL_SRC_FILES += android/ffmpeg_api_jni.c
 LOCAL_SRC_FILES += android/ijkplayer_android.c
 LOCAL_SRC_FILES += android/ijkplayer_jni.c

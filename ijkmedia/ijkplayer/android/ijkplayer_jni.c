@@ -902,6 +902,8 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
 
     FFmpegApi_global_init(env);
 
+    LimaoApi_global_init(vm, env); // add by tiangui @ 20151020
+
     return JNI_VERSION_1_4;
 }
 

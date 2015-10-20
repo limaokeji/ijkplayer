@@ -33,6 +33,7 @@ typedef struct AVMessage {
     int what;
     int arg1;
     int arg2;
+    void *data; // add by tiangui @ 20151020
     struct AVMessage *next;
 } AVMessage;
 
@@ -130,6 +131,28 @@ inline static void msg_queue_put_simple3(MessageQueue *q, int what, int arg1, in
     msg.what = what;
     msg.arg1 = arg1;
     msg.arg2 = arg2;
+    msg_queue_put(q, &msg);
+}
+
+// add by tiangui @ 20151020
+inline static void msg_queue_put_simple4(MessageQueue *q, int what, int arg1, int arg2, void *data)
+{
+    AVMessage msg;
+    msg_init_msg(&msg);
+    msg.what = what;
+    msg.arg1 = arg1;
+    msg.arg2 = arg2;
+    msg.data = data;
+    msg_queue_put(q, &msg);
+}
+
+// add by tiangui @ 20151020
+inline static void msg_queue_put_simple5(MessageQueue *q, int what, void *data)
+{
+    AVMessage msg;
+    msg_init_msg(&msg);
+    msg.what = what;
+    msg.data = data;
     msg_queue_put(q, &msg);
 }
 
