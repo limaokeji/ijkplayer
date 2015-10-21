@@ -112,13 +112,13 @@ void LimaoApi_download(char *fileHash, int index, int64_t offset, int64_t size)
 
 }
 
-int LimaoApi_downloadExt(char *fileHash, int index, int64_t offset, int64_t size, int timeout)
+int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeout)
 {
 	int ret = 0;
 
 	jstring str = (*g_env)->NewStringUTF(g_env, fileHash);
 
-	ret = (*g_env)->CallStaticIntMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, index, offset, size, timeout);
+	ret = (*g_env)->CallStaticIntMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, offset, size, timeout);
 
 	return ret;
 }
@@ -223,7 +223,7 @@ static void message_loop_n(JNIEnv *env)
         	ALOGE("LimaoApi: message_loop_n(): LM_MSG_PREPARE_TO_PLAY");
 
 				    //LimaoApi_download("fileHash_001", 0, 100, 30);
-				    //int xRet = LimaoApi_downloadExt("fileHash_002", 0, 200, 50, 10);
+				    //int xRet = LimaoApi_downloadExt("fileHash_002", 200, 50, 10);
 				    LimaoApi_isDownload("fileHash_003", 300, 50);
 					
             break;
@@ -335,7 +335,7 @@ int LimaoApi_global_init(JavaVM *jvm, JNIEnv *env)
         "c2j_download", "(Ljava/lang/String;IJJ)V");
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_downloadExt, g_clazz.clazz,
-        "c2j_downloadExt", "(Ljava/lang/String;IJJI)I");
+        "c2j_downloadExt", "(Ljava/lang/String;JJI)I");
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_isDownload, g_clazz.clazz,
         "c2j_isDownload", "(Ljava/lang/String;JJ)I");

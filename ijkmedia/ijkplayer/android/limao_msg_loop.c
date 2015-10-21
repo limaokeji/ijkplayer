@@ -72,7 +72,7 @@ static void message_loop_x(JNIEnv *env)
         		ALOGE("LimaoApi: message_loop_x(): LM_MSG_PREPARE_TO_PLAY");
 
 				    //LimaoApi_download("fileHash_001", 0, 100, 30);
-				    int xRet = LimaoApi_downloadExt("fileHash_002", 0, 200, 50, 10);
+				    int xRet = LimaoApi_downloadExt("fileHash_002", 200, 50, 10);
 				    ALOGE("LimaoApi: message_loop_x(): xRet = %d", xRet);
 				    
 				    LimaoApi_isDownload("fileHash_003", 300, 50);

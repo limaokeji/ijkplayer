@@ -43,7 +43,7 @@ MessageQueue * LimaoApi_get_msg_queue();
 
 void LimaoApi_prepareOK(char *fileHash);
 
-int LimaoApi_downloadExt(char *fileHash, int index, int64_t offset, int64_t size, int timeout);
+int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeout);
 
 /*
  * return: 1-ряобтьё╛0-н╢обть
