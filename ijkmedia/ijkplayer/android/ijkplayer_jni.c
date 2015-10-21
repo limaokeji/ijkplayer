@@ -824,6 +824,8 @@ IjkMediaPlayer_native_profileEnd(JNIEnv *env, jclass clazz)
 
 // ----------------------------------------------------------------------------
 
+int LimaoApi_global_init(JavaVM *jvm, JNIEnv *env);
+
 static JNINativeMethod g_methods[] = {
     {
         "_setDataSource",

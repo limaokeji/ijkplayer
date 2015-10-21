@@ -28,6 +28,7 @@ typedef struct limao_api_fields_t {
 	jmethodID jmid_c2j_download;
 	jmethodID jmid_c2j_downloadExt;
 	jmethodID jmid_c2j_isDownload;
+	jmethodID jmid_c2j_getFilePath;
 
 } limao_api_fields_t;
 
@@ -131,6 +132,23 @@ int LimaoApi_isDownload(char *fileHash, int64_t offset, int64_t size)
 	ret = (*g_env)->CallStaticIntMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_isDownload, str, offset, size);
 
 	return ret;
+}
+
+void LimaoApi_getFilePath(/*IN*/char *fileHash, /*OUT*/char *filePath)
+{
+	//int ret = 0;
+
+	jstring strHash = (*g_env)->NewStringUTF(g_env, fileHash);
+
+	jstring strPath = (*g_env)->CallStaticObjectMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_getFilePath, strHash);
+
+	const char * c_filePath = (*g_env)->GetStringUTFChars(g_env, strPath, NULL);
+
+	memset(filePath, 0, 4);
+	strcpy(filePath, c_filePath);
+	ALOGE("LimaoApi_getFilePath: fileHash | filePath = %s %s", fileHash, filePath);
+	
+	(*g_env)->ReleaseStringUTFChars(g_env, strPath, c_filePath);
 }
 
 static void LimaoApi_downloadFinish(JNIEnv *env, jclass clazz, jstring fileHash, jint index)
@@ -321,6 +339,9 @@ int LimaoApi_global_init(JavaVM *jvm, JNIEnv *env)
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_isDownload, g_clazz.clazz,
         "c2j_isDownload", "(Ljava/lang/String;JJ)I");
+
+    IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_getFilePath, g_clazz.clazz,
+        "c2j_getFilePath", "(Ljava/lang/String;)Ljava/lang/String;");
 
     return ret;
 }

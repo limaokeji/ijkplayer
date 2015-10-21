@@ -45,6 +45,11 @@ void LimaoApi_prepareOK(char *fileHash);
 
 int LimaoApi_downloadExt(char *fileHash, int index, int64_t offset, int64_t size, int timeout);
 
+/*
+ * return: 1-ряобтьё╛0-н╢обть
+ */
 int LimaoApi_isDownload(char *fileHash, int64_t offset, int64_t size);
+
+void LimaoApi_getFilePath(/*IN*/char *fileHash, /*OUT*/char *filePath);
 
 #endif
