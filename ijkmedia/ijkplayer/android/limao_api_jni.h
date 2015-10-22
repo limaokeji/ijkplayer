@@ -52,4 +52,6 @@ int LimaoApi_isDownload(char *fileHash, int64_t offset, int64_t size);
 
 void LimaoApi_getFilePath(/*IN*/char *fileHash, /*OUT*/char *filePath);
 
+int64_t LimaoApi_getFileSize(char *fileHash);
+
 #endif

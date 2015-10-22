@@ -81,6 +81,9 @@ static void message_loop_x(JNIEnv *env)
 				    LimaoApi_getFilePath("fileHash_004", filePath);
 				    ALOGE("LimaoApi: message_loop_x(): filePath = %s", filePath);
 					
+					int64_t fsize = LimaoApi_getFileSize("fileHash_005");
+					ALOGE("LimaoApi: message_loop_x(): fsize = %lld", fsize);
+
             break;
 
         case LM_MSG_DOWNLOAD_RSP:
