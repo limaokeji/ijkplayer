@@ -3,6 +3,11 @@
  */
 
 #ifndef IJKPLAYER_ANDROID__LIMAO_API_JNI_H
+#define IJKPLAYER_ANDROID__LIMAO_API_JNI_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdint.h>
 #include <jni.h>
@@ -39,6 +44,8 @@ typedef struct {
 
 int LimaoApi_global_init(JavaVM *jvm, JNIEnv *env);
 
+JavaVM * LimaoApi_get_JVM();
+
 MessageQueue * LimaoApi_get_msg_queue();
 
 void LimaoApi_prepareOK(char *fileHash);
@@ -53,5 +60,9 @@ int LimaoApi_isDownload(char *fileHash, int64_t offset, int64_t size);
 void LimaoApi_getFilePath(/*IN*/char *fileHash, /*OUT*/char *filePath);
 
 int64_t LimaoApi_getFileSize(char *fileHash);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
