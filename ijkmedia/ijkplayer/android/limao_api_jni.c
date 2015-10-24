@@ -108,6 +108,7 @@ void LimaoApi_prepareOK(char *fileHash)
 	(*env)->DeleteLocalRef(env, str);
 }
 
+#if 0
 void LimaoApi_download(char *fileHash, int index, int64_t offset, int64_t size)
 {
 //	LimaoApi_postMsgToUI(LM_MSG_DOWNLOAD_REQ, NULL, 0, 0);
@@ -122,6 +123,7 @@ void LimaoApi_download(char *fileHash, int index, int64_t offset, int64_t size)
 	
 	(*env)->DeleteLocalRef(env, str);
 }
+#endif
 
 int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeout)
 {
