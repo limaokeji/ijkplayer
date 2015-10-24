@@ -41,10 +41,9 @@ static void start_routine_new(ThreadLocalData_t *pData)
 #if 0 // ���Դ���
 	for (int i = 0; i < 600; i++)
 	{
-#if 1
-		LimaoApi_download("fileHash_005", i, 10, 100);
+		//LimaoApi_download("fileHash_005", i, i*10, 100);
 
-		int xRet = LimaoApi_downloadExt("fileHash_001", 200, 50, 10);
+		int xRet = LimaoApi_downloadExt("fileHash_001", i, i*10, 10);
 		ALOGD("LimaoApi: start_routine_new(): xRet = %d", xRet);
 		
 		LimaoApi_isDownload("fileHash_002", 300, 50);
@@ -55,10 +54,8 @@ static void start_routine_new(ThreadLocalData_t *pData)
 		
 		int64_t fsize = LimaoApi_getFileSize("fileHash_004");
 		ALOGD("LimaoApi: start_routine_new(): fsize = %lld", fsize);
-#endif
 
 		//LimaoApi_prepareOK("fileHash_005");
-
 	}
 #endif
 
