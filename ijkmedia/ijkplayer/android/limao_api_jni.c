@@ -59,6 +59,8 @@ static JavaVM *g_jvm;
 
 static JNIEnv *g_env;
 
+static int g_env_flag = 1; // is use g_env
+
 static limao_api_fields_t g_clazz;
 
 static LimaoJniStruct s_limaoJniStruct;
@@ -97,9 +99,16 @@ void LimaoApi_prepareOK(char *fileHash)
 {
 //	LimaoApi_postMsgToUI(LM_MSG_PREPARE_OK, NULL, 0, 0);
 
-	pthread_key_t key = LimaoApi_get_pthread_key();
-	ThreadLocalData_t *tld = pthread_getspecific(key);
-	JNIEnv *env = tld->env;
+	JNIEnv *env = NULL;
+
+	if (g_env_flag == 1)
+	{
+		env = g_env;
+	} else {
+		pthread_key_t key = LimaoApi_get_pthread_key();
+		ThreadLocalData_t *tld = pthread_getspecific(key);
+		JNIEnv *env = tld->env;
+	}
 
 	jstring str = (*env)->NewStringUTF(env, fileHash);
 
@@ -113,9 +122,16 @@ void LimaoApi_download(char *fileHash, int index, int64_t offset, int64_t size)
 {
 //	LimaoApi_postMsgToUI(LM_MSG_DOWNLOAD_REQ, NULL, 0, 0);
 
-	pthread_key_t key = LimaoApi_get_pthread_key();
-	ThreadLocalData_t *tld = pthread_getspecific(key);
-	JNIEnv *env = tld->env;
+	JNIEnv *env = NULL;
+
+	if (g_env_flag == 1)
+	{
+		env = g_env;
+	} else {
+		pthread_key_t key = LimaoApi_get_pthread_key();
+		ThreadLocalData_t *tld = pthread_getspecific(key);
+		JNIEnv *env = tld->env;
+	}
 
 	jstring str = (*env)->NewStringUTF(env, fileHash);
 
@@ -131,9 +147,16 @@ int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeo
 
 	__android_log_print(ANDROID_LOG_DEBUG, "LimaoApi_downloadExt()", "offset = %lld, size = %lld", offset, size);
 
-	pthread_key_t key = LimaoApi_get_pthread_key();
-	ThreadLocalData_t *tld = pthread_getspecific(key);
-	JNIEnv *env = tld->env;
+	JNIEnv *env = NULL;
+
+	if (g_env_flag == 1)
+	{
+		env = g_env;
+	} else {
+		pthread_key_t key = LimaoApi_get_pthread_key();
+		ThreadLocalData_t *tld = pthread_getspecific(key);
+		JNIEnv *env = tld->env;
+	}
 
 	jstring str = (*env)->NewStringUTF(env, fileHash);
 
@@ -148,9 +171,16 @@ int LimaoApi_isDownload(char *fileHash, int64_t offset, int64_t size)
 {
 	int ret = 0;
 
-	pthread_key_t key = LimaoApi_get_pthread_key();
-	ThreadLocalData_t *tld = pthread_getspecific(key);
-	JNIEnv *env = tld->env;
+	JNIEnv *env = NULL;
+
+	if (g_env_flag == 1)
+	{
+		env = g_env;
+	} else {
+		pthread_key_t key = LimaoApi_get_pthread_key();
+		ThreadLocalData_t *tld = pthread_getspecific(key);
+		JNIEnv *env = tld->env;
+	}
 
 	jstring str = (*env)->NewStringUTF(env, fileHash);
 	
@@ -165,9 +195,16 @@ void LimaoApi_getFilePath(/*IN*/char *fileHash, /*OUT*/char *filePath)
 {
 	//int ret = 0;
 
-	pthread_key_t key = LimaoApi_get_pthread_key();
-	ThreadLocalData_t *tld = pthread_getspecific(key);
-	JNIEnv *env = tld->env;
+	JNIEnv *env = NULL;
+
+	if (g_env_flag == 1)
+	{
+		env = g_env;
+	} else {
+		pthread_key_t key = LimaoApi_get_pthread_key();
+		ThreadLocalData_t *tld = pthread_getspecific(key);
+		JNIEnv *env = tld->env;
+	}
 
 	jstring strHash = (*env)->NewStringUTF(env, fileHash);
 
@@ -189,9 +226,16 @@ int64_t LimaoApi_getFileSize(char *fileHash)
 {
 	//int ret = 0;
 
-	pthread_key_t key = LimaoApi_get_pthread_key();
-	ThreadLocalData_t *tld = pthread_getspecific(key);
-	JNIEnv *env = tld->env;
+	JNIEnv *env = NULL;
+
+	if (g_env_flag == 1)
+	{
+		env = g_env;
+	} else {
+		pthread_key_t key = LimaoApi_get_pthread_key();
+		ThreadLocalData_t *tld = pthread_getspecific(key);
+		JNIEnv *env = tld->env;
+	}
 
 	jstring strHash = (*env)->NewStringUTF(env, fileHash);
 
