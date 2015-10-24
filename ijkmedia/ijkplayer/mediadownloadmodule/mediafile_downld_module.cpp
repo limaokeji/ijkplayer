@@ -222,3 +222,8 @@ int mediafile_downld_module_getmediadatalock_count()
 		return 0;
 	return g_downld_mediafile->GetMdataBlockCount();
 }
+
+DOWNLOADBLOCKINFO * mediafile_downld_module_getblocklistinfo()
+{
+	return g_downld_mediafile->GetDownloadBlockInfoList();
+}

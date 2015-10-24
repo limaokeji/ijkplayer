@@ -132,3 +132,7 @@ char * DownldMediaFile::GetPlayFileNamePath()
 {
 	return _playMediaFilePath;
 }
+DOWNLOADBLOCKINFO * DownldMediaFile::GetDownloadBlockInfoList()
+{
+	return _downloadBlockInfoList;
+}

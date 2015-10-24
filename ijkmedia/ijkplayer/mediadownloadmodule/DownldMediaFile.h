@@ -22,6 +22,7 @@ public:
 	virtual bool DownloadFileFirst(){return false;}
 	virtual bool DownloadMdatBlock(int index){return false;}
 	virtual int GetMdataBlockCount(){return 0;}
+	DOWNLOADBLOCKINFO * GetDownloadBlockInfoList();
 	char * _playMediaFilePath;
 	char * _mediaFileHash;
 	FILE* _pPlayerMediaFile;

@@ -69,7 +69,7 @@ bool mediafile_downld_module_download_mediadatablock(int index);
 int mediafile_downld_module_getmediadatalock_count();
 
 
-
+DOWNLOADBLOCKINFO * mediafile_downld_module_getblocklistinfo();
 #ifdef __cplusplus
 }
 #endif

@@ -2,6 +2,7 @@
  * limao_msg_loop.c
  */
 #include "limao_mediafile_download.h"
+#include "limao_api_jni.h"
 #include "../mediadownloadmodule/mediafile_downld_module.h"
 #include "../mediadownloadmodule/mediafile_download_log.h"
 #include "limao_msg_loop.h"
@@ -28,7 +29,7 @@ void media_file_download_module_thread(void *argv)
 					   "ijkplayer media file download medule thread ",
 					   mediafile_hash,
 					   	NULL);
-	int64_t offset = 0;
+	/*int64_t offset = 0;
 	int64_t size = 16;
 	int ret=  LimaoApi_downloadExt(mediafile_hash, 1, 16, 1000);CHECK(ret);
 	offset = 18;	size = 16;
@@ -83,7 +84,7 @@ void media_file_download_module_thread(void *argv)
 				   "ijkplayer media file download medule thread ",
 				   "thread is close.",
 				   	NULL);
-	return;
+	return;*/
 	if((mediafile_hash == NULL)||(suffix_name == NULL))
 	{
 		printf_log(LOG_ERROR,
