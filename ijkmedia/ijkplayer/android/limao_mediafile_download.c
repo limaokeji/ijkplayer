@@ -190,3 +190,36 @@ thread_failed:
 
 }
 
+int timestamp_2_blockIndex(uint64_t timestamp)
+{
+	int download_block_count = mediafile_downld_module_getmediadatalock_count();
+	DOWNLOADBLOCKINFO * download_blockinfo_list = mediafile_downld_module_getblocklistinfo();
+	
+	for (int i = 0; i < download_block_count - 1; i++)
+	{
+		if (( timestamp >= download_blockinfo_list[i].timeStamp) && (timestamp < download_blockinfo_list[i+1].timeStamp ))
+		{
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+int isBlockDownload(uint64_t timestamp)
+{
+	int download_block_count = mediafile_downld_module_getmediadatalock_count();
+	DOWNLOADBLOCKINFO * download_blockinfo_list = mediafile_downld_module_getblocklistinfo();
+	if(timestamp < download_blockinfo_list[2].timeStamp)
+	{
+		return  1;
+	}
+	for (int i = 0; i < download_block_count - 1; i++)
+	{
+		if (( timestamp >= download_blockinfo_list[i].timeStamp) && (timestamp < download_blockinfo_list[i+1].timeStamp ))
+		{
+			return download_blockinfo_list[i].isDownload;
+		}
+	}
+	return 0;
+}

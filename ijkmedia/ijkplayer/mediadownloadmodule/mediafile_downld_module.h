@@ -3,8 +3,8 @@
 
 #include "DataType.h"
 #include <stdio.h>
-static  DOWNLOADBLOCKINFO * g_downloadBlockInfoList = NULL;
-static  FILE * g_downloadModuleLogFile = NULL;
+//static  DOWNLOADBLOCKINFO * g_downloadBlockInfoList = NULL;
+//static  FILE * g_downloadModuleLogFile = NULL;
 
 #ifndef __cplusplus
 #define bool unsigned char

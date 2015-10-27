@@ -209,7 +209,6 @@ bool mediafile_downld_module_download_mediadatablock(int index)
 {
 	if(g_downld_mediafile == NULL)
 		return false;
-
 	return g_downld_mediafile->DownloadMdatBlock(index);
 }
 

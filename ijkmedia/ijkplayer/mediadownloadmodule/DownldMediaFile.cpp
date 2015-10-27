@@ -136,3 +136,16 @@ DOWNLOADBLOCKINFO * DownldMediaFile::GetDownloadBlockInfoList()
 {
 	return _downloadBlockInfoList;
 }
+
+bool DownldMediaFile::IsDownloadMdatBlock(int index)
+{
+	if(_downloadBlockInfoList == NULL)
+	{
+		return false;
+	}
+	if((index <0) ||(index >= _syncSampleCount))
+	{
+		return false;
+	}
+	return (_downloadBlockInfoList+index)->isDownload;
+}

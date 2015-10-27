@@ -88,7 +88,7 @@ static void * thread_start_routine(void *pData)
 static void message_loop_x(JNIEnv *env)
 {
 	int block_count;
-	int block_index;
+	int block_index = 0;
 	char * mediafile_hash ;
 	char * suffix_name ;
 	limao_api_param_4_prepareToPlay_t *param;
@@ -173,13 +173,19 @@ static void message_loop_x(JNIEnv *env)
 							   "mediafile download block failed.\n",
 								NULL);
 			}
-
+           	if(!mediafile_downld_module_download_mediadatablock(2))
+			{
+						printf_log(LOG_ERROR,
+							   "ijkplayer media file download medule thread",
+							   "mediafile download block failed.\n",
+								NULL);
+			}
            	LimaoApi_prepareOK(mediafile_hash);
 
-           	msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_P2P_WONDLOAD_BLOCK, 2);
+           	msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_P2P_DOWNLOAD_BLOCK, 2);
             break;
 
-        case LM_MSG_P2P_WONDLOAD_BLOCK:
+        case LM_MSG_P2P_DOWNLOAD_BLOCK:
 
 
         	block_index  = msg.arg1;
@@ -199,30 +205,52 @@ static void message_loop_x(JNIEnv *env)
 					   "mediafile download block failed.\n",
 					   	NULL);
         	}
-        	ALOGI("download the block %d success.",block_index);
-        	msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_P2P_WONDLOAD_BLOCK, block_index+1);
-        	break;
 
-/*        case LM_MSG_PLAYER_SEEK:
-        	int64_t timestmp = msg.arg1;
-        	if(msg.arg1 < 0 )
+        	if(block_index<block_count)
         	{
+        		msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_P2P_DOWNLOAD_BLOCK, block_index+1);
+
+        	}else if(block_index == block_count)
+        	{
+				printf_log(LOG_INFO,
+					   "ijkplayer media file download medule thread",
+					   "mediafile download complete.\n",
+					   	NULL);
+        	}
+        		break;
+
+        case LM_MSG_PLAYER_SEEK:
+        	block_index = msg.arg1;
+        	ALOGI("LM_MSG_PLAYER_SEEK in. %d.",block_index);
+			if((block_index<0)||(block_index >= block_count))
+			{
 				printf_log(LOG_ERROR,
 					   "ijkplayer media file download medule thread",
-					   "the timestmp is invalid.\n",
-					   	NULL);
+					   "the download index is invalid.\n",
+						NULL);
 				break;
-        	}
-        	pdownload_blockinfo_list =mediafile_downld_module_getblocklistinfo();
-        	if(pdownload_blockinfo_list == NULL)
-        	{
+			}
+			if(!mediafile_downld_module_download_mediadatablock(block_index))
+			{
 				printf_log(LOG_ERROR,
 					   "ijkplayer media file download medule thread",
-					   "the download block info list is invalid.\n",
-					   	NULL);
-				break;
-        	}
-        	break;*/
+					   "mediafile download block failed.\n",
+						NULL);
+			}
+			msg_queue_remove(LimaoApi_get_msg_queue(), LM_MSG_P2P_DOWNLOAD_BLOCK); //delete the download msg
+
+			if(block_index<block_count)
+			{
+				msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_P2P_DOWNLOAD_BLOCK, block_index+1);
+			}else if(block_index == block_count)
+			{
+				printf_log(LOG_INFO,
+					   "ijkplayer media file download medule thread",
+					   "mediafile download complete.\n",
+						NULL);
+			}
+
+        	break;
         default:
             ALOGD("LimaoApi: unknown msg: %d", msg.what);
             break;

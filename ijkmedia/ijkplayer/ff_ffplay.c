@@ -894,12 +894,23 @@ static void toggle_pause_l(FFPlayer *ffp, int pause_on)
     is->step = 0;
 }
 
+static void toggle_pause_l2(FFPlayer *ffp, int pause_on)//add by lmk
+{
+    VideoState *is = ffp->is;
+    is->pause_req = pause_on;
+    ffp->auto_resume = !pause_on;
+    stream_update_pause_l(ffp);
+    is->step = 0;
+}
+
 static void toggle_pause(FFPlayer *ffp, int pause_on)
 {
     SDL_LockMutex(ffp->is->play_mutex);
     toggle_pause_l(ffp, pause_on);
     SDL_UnlockMutex(ffp->is->play_mutex);
 }
+
+
 
 static void step_to_next_frame_l(FFPlayer *ffp)
 {
@@ -2253,6 +2264,25 @@ static int is_realtime(AVFormatContext *s)
     return 0;
 }
 
+// _test
+
+#include "android/limao_api_jni.h"
+
+int isBlockDownload(uint64_t timestamp);
+
+uint64_t g_timestamp = 0;
+
+void send_download_req(int index)
+{
+	static int curReqBlockIndex = -1;
+
+	if (index != curReqBlockIndex)
+	{
+		msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_PLAYER_SEEK, index);
+		curReqBlockIndex = index;
+	}
+}
+
 /* this thread gets the stream from the disk or the network */
 static int read_thread(void *arg)
 {
@@ -2274,7 +2304,9 @@ static int read_thread(void *arg)
     int last_error = 0;
     int64_t prev_io_tick_counter = 0;
     int64_t io_tick_counter = 0;
-
+    int64_t one_second_timestamp = 0;  //add by lmk
+    int seek_pause = 0;
+    int read_packet_pause = 0;
     memset(st_index, -1, sizeof(st_index));
     is->last_video_stream = is->video_stream = -1;
     is->last_audio_stream = is->audio_stream = -1;
@@ -2497,6 +2529,7 @@ static int read_thread(void *arg)
         ffp->auto_resume = 0;
     }
 
+    one_second_timestamp = (1 / AV_TIME_BASE) / av_q2d(ic->streams[AVMEDIA_TYPE_VIDEO]->time_base);;//add by lmk
     for (;;) {
         if (is->abort_request)
             break;
@@ -2519,10 +2552,39 @@ static int read_thread(void *arg)
             continue;
         }
 #endif
-        if (is->seek_req) {
+
+
+        if (is->seek_req) {   //_test
             int64_t seek_target = is->seek_pos;
             int64_t seek_min    = is->seek_rel > 0 ? seek_target - is->seek_rel + 2: INT64_MIN;
             int64_t seek_max    = is->seek_rel < 0 ? seek_target - is->seek_rel - 2: INT64_MAX;
+
+            int64_t timestamp =  (seek_target / AV_TIME_BASE) / av_q2d(ic->streams[AVMEDIA_TYPE_VIDEO]->time_base);
+            __android_log_print(ANDROID_LOG_INFO,"lmk test","seek req: seek target is %llu, time stamp %llu", seek_target,timestamp);
+
+            if (!isBlockDownload(timestamp + one_second_timestamp)) // FIXME
+			{
+				av_log(ffp, AV_LOG_ERROR, "read_thread(): av_read_frame(): ret = -112233\n");
+				send_download_req(timestamp_2_blockIndex(timestamp + one_second_timestamp));
+				if(ffp->is->pause_req == 0)
+				{
+					ffp_pause_l(ffp);
+					seek_pause = 1;
+					__android_log_print(ANDROID_LOG_INFO,"lmk test","seek to pause");
+				}
+				SDL_Delay(1000);
+				__android_log_print(ANDROID_LOG_INFO,"lmk test","seek to time  is not download, sdl delay 1000 timestamp is %llu + %llu",timestamp , one_second_timestamp);
+
+				continue;
+			}else
+			{
+				if(seek_pause == 1)
+				{
+					ffp_start_l(ffp);
+					seek_pause = 0;
+					__android_log_print(ANDROID_LOG_INFO,"lmk test","seek to start");
+				}
+			}
 // FIXME the +-2 is due to rounding being not done in the correct direction in generation
 //      of the seek_pos/seek_rel variables
 
@@ -2651,7 +2713,40 @@ static int read_thread(void *arg)
             }
         }
         pkt->flags = 0;
-        ret = av_read_frame(ic, pkt);
+
+		if (!isBlockDownload(g_timestamp + one_second_timestamp)) // FIXME
+		{
+			av_log(ffp, AV_LOG_ERROR, "read_thread(): av_read_frame(): ret = -112233\n");
+			if(ffp->is->pause_req == 0)
+			{
+				ffp_pause_l(ffp);
+				read_packet_pause = 1;
+				__android_log_print(ANDROID_LOG_INFO,"lmk test","read packet to pause %llu",g_timestamp);
+			}
+			SDL_Delay(2000);
+
+            __android_log_print(ANDROID_LOG_INFO,"lmk test","the read frame is not download, sdl delay 1000 timestamp is %llu + %llu",g_timestamp , one_second_timestamp);
+            continue;
+		}else
+		{
+
+			if(read_packet_pause == 1)
+			{
+				ffp_start_l(ffp);
+				read_packet_pause = 0;
+				__android_log_print(ANDROID_LOG_INFO,"lmk test","read packet to start %llu",g_timestamp);
+			}
+
+		}
+
+        ret = av_read_frame(ic, pkt); // _test
+
+		if (ret >= 0) {
+			if (pkt->stream_index == is->video_stream) {
+				g_timestamp = pkt->pts;
+			}
+		}
+
         if (ret < 0) {
             if ((ret == AVERROR_EOF || avio_feof(ic->pb)) && !is->eof) {
                 if (is->video_stream >= 0)

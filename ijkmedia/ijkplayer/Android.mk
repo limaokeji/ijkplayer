@@ -54,7 +54,7 @@ LOCAL_SRC_FILES += android/ijkplayer_android.c
 LOCAL_SRC_FILES += android/ijkplayer_jni.c
 LOCAL_SRC_FILES += android/limao_api_jni.c    # add by lmk
 LOCAL_SRC_FILES += android/limao_msg_loop.c   
-#LOCAL_SRC_FILES += android/limao_mediafile_download.c   
+LOCAL_SRC_FILES += android/limao_mediafile_download.c   
 
 LOCAL_SRC_FILES += android/pipeline/ffpipeline_android.c
 LOCAL_SRC_FILES += android/pipeline/ffpipenode_android_mediacodec_vdec.c
