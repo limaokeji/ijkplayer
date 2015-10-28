@@ -9,7 +9,7 @@
 int printf_log(int flags ,const char * location,const char * format,FILE * log_file){
 	if(flags & LOG_INFO )
 	{
-		 __android_log_print(ANDROID_LOG_INFO,location,format);
+		 __android_log_print(ANDROID_LOG_INFO,"lmk media file download", "%s   |   %s ",location,format);
 		if((flags & LOG_FILE) && (log_file != 0))
 		{
 			fprintf(log_file,"------> INFO: %s , %s\n",location,format);
@@ -17,7 +17,7 @@ int printf_log(int flags ,const char * location,const char * format,FILE * log_f
 	}
 	if(flags & LOG_WARN)
 	{
-		__android_log_print(ANDROID_LOG_WARN,location,format);
+		__android_log_print(ANDROID_LOG_WARN,"lmk media file download", "%s   |   %s ",location,format);
 		if((flags & LOG_FILE) && (log_file != 0))
 		{
 			fprintf(log_file,"????????  WARN: %s , %s\n",location,format);
@@ -25,7 +25,7 @@ int printf_log(int flags ,const char * location,const char * format,FILE * log_f
 	}
 	if(flags & LOG_ERROR)
 	{
-		__android_log_print(ANDROID_LOG_ERROR,location,format);
+		__android_log_print(ANDROID_LOG_ERROR,"lmk media file download", "%s   |   %s ",location,format);
 		if((flags & LOG_FILE) && (log_file != 0))
 		{
 			fprintf(log_file,"!!!!!!!!!  ERROR :%s , %s\n",location,format);

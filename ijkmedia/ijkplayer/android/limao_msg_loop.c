@@ -92,8 +92,8 @@ static void message_loop_x(JNIEnv *env)
 	char * mediafile_hash ;
 	char * suffix_name ;
 	limao_api_param_4_prepareToPlay_t *param;
-	DOWNLOADBLOCKINFO * pdownload_blockinfo_list = NULL
-	ALOGD("LimaoApi: message_loop_x()");
+	DOWNLOADBLOCKINFO * pdownload_blockinfo_list = NULL;
+
 
 	pthread_key_create(&pthread_key_1, NULL);
 
@@ -121,6 +121,10 @@ static void message_loop_x(JNIEnv *env)
         	mediafile_hash = param->fileHash;
         	suffix_name = param->filenameExtension;
 
+        	printf_log(LOG_ERROR,
+        			mediafile_hash,
+        			suffix_name,
+                			   	NULL);
         	if(!mediafile_downld_module_init(mediafile_hash, suffix_name, NULL, 0,
         			&g_pdownload_blockinfo_list, NULL))
         	{
@@ -182,7 +186,7 @@ static void message_loop_x(JNIEnv *env)
 			}
            	LimaoApi_prepareOK(mediafile_hash);
 
-           	msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_P2P_DOWNLOAD_BLOCK, 2);
+           	msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_P2P_DOWNLOAD_BLOCK, 3);
             break;
 
         case LM_MSG_P2P_DOWNLOAD_BLOCK:

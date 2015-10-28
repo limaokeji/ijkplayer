@@ -161,8 +161,12 @@ bool mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, char
 				   "the media file  type is Not Support.\n",
 				   plog_file);
 	}
-	if(g_downld_mediafile->Init(mediafile_hash, suffix_name, play_mediefile_path, filesize,plog_file))
+	if(!g_downld_mediafile->Init(mediafile_hash, suffix_name, play_mediefile_path, filesize,plog_file))
 	{
+		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mediafile downld module init",
+				   "g_downld_mediafile init failed.\n",
+				   plog_file);
 		return false;
 	}
 

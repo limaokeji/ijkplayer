@@ -16,7 +16,7 @@ public:
 	int P2pDownloadMediaData(long offset, int64_t blockSize);
 	DownldMediaFile();
 	~DownldMediaFile();
-	virtual bool Init(char * inFileName,char * suffix_name, char * outFileName,uint64_t filesize,
+	bool Init(char * inFileName,char * suffix_name, char * outFileName,uint64_t filesize,
 			FILE* plog_file);
 	virtual bool PraseRootBox(){return false;}
 	virtual bool DownloadFileFirst(){return false;}

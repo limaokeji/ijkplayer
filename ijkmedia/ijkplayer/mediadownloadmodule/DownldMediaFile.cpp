@@ -44,11 +44,11 @@ bool DownldMediaFile::Init(char * fileNamehash,char * suffix_name, char * playMe
 		 FILE* plog_file)
 {
 	CHECK_POINTER_RET(fileNamehash, false);
-	CHECK_POINTER_RET(playMediaFilePath, false);
 	strcpy(_mediaFileHash, fileNamehash);
-	strcpy(_playMediaFilePath, playMediaFilePath);
-	/*_pInFile = fopen(inFileName, "rb");
-	_pOutFile = fopen(outFileName, "wb+");*/
+	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+			_mediaFileHash,
+			"DownldMediaFile::Init",
+						   	pMediaFileDownldLog);
 
 	_medieFileSize = filesize;
 	pMediaFileDownldLog = plog_file;
@@ -60,6 +60,12 @@ int DownldMediaFile::P2pDownloadMediaData(long offset, int64_t blockSize)
 	{
 		return -1;
 	}
+	char logbuf[200] ={0};
+	sprintf(logbuf,"offset %ld,  block size %llu",offset,blockSize);
+	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+						   "DownldMediaFile::P2pDownloadMediaData ",
+						   logbuf,
+						   	pMediaFileDownldLog);
 	int ret =  LimaoApi_downloadExt(_mediaFileHash,offset,blockSize,1000);
 	if(ret != 0)
 	{
