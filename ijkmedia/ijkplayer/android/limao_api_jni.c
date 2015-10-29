@@ -168,8 +168,6 @@ int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeo
 {
 	int ret = 0;
 
-	__android_log_print(ANDROID_LOG_DEBUG, "LimaoApi_downloadExt()", "offset = %lld, size = %lld", offset, size);
-
 	JNIEnv *env = NULL;
 
 	if (g_env_flag == 1)
@@ -183,9 +181,14 @@ int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeo
 
 	jstring str = (*env)->NewStringUTF(env, fileHash);
 
-	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, offset, size, timeout);
+	jlong tmp_offset = offset;
+	jlong tmp_size = size;
+	//ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, offset, size, timeout);
+	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, tmp_offset, tmp_size, timeout);
 
 	(*env)->DeleteLocalRef(env, str);
+
+	__android_log_print(ANDROID_LOG_DEBUG, "LimaoApi_downloadExt()", "offset = %lld, size = %lld ret = %d", offset, size, ret);
 
 	return ret;
 }
