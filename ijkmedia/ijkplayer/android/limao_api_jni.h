@@ -14,7 +14,7 @@ extern "C" {
 #include "../ff_ffmsg_queue.h"
 
 /**
- * ������ϢID������ PlayManager.java �ж������ֵ��ͬ��
+ * ref to PlayManager.java
  */
 
 #define LM_MSG_ERROR                       100     /* arg1 = error */
@@ -27,7 +27,6 @@ extern "C" {
 #define LM_MSG_P2P_DOWNLOAD_BLOCK   11002
 
 #define LM_MSG_PLAYER_SEEK   11003
-
 
 
 
@@ -56,10 +55,12 @@ MessageQueue * LimaoApi_get_msg_queue();
 
 void LimaoApi_prepareOK(char *fileHash);
 
+void LimaoApi_bufferingUpdate(char *fileHash, int percent);
+
 int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeout);
 
 /*
- * return: 1-�����أ�0-δ����
+ * return: 1-yes, 0-no
  */
 int LimaoApi_isDownload(char *fileHash, int64_t offset, int64_t size);
 
