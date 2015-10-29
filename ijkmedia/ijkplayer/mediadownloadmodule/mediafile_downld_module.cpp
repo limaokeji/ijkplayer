@@ -5,6 +5,7 @@
 #include "./mp4parse/Mp4DownldMediaFile.h"
 #include "mkvparse/MkvDownldMediaFile.h"
 #include "rmvbparse/RmvbDownldMediaFile.h"
+#include "../android/limao_api_jni.h"
 #include <string.h>
 #define stricmp strcasecmp
 DownldMediaFile * g_downld_mediafile = NULL;
@@ -122,6 +123,9 @@ DownldMediaFile * get_downld_mediafile(int file_type)
 
 	return g_downld_mediafile;
 }
+
+int check_media_type_for_file_data(char * hash_name);
+
 /**
  * init
  * @param mediafile_hash  the media file hash for p2p downlaod
@@ -146,7 +150,16 @@ bool mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, char
 				   plog_file);
 	}
 
-	int media_type = check_media_type(suffix_name);
+	int tmp_media_type = check_media_type_for_file_data(mediafile_hash);
+	int media_type = -1;
+	if(tmp_media_type != -1)
+	{
+		media_type = tmp_media_type;
+	}else
+	{
+		media_type = check_media_type(suffix_name);
+	}
+
 	if(media_type == -1)
 	{
 		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
@@ -229,4 +242,87 @@ int mediafile_downld_module_getmediadatalock_count()
 DOWNLOADBLOCKINFO * mediafile_downld_module_getblocklistinfo()
 {
 	return g_downld_mediafile->GetDownloadBlockInfoList();
+}
+
+int check_media_type_for_file_data(char * hash_name)
+{
+	if(hash_name == NULL)
+	{
+		printf_log(LOG_ERROR,
+				   "mediafile downld module init",
+				   "hash name is invalid.",
+				   NULL);
+		return -1;
+	}
+
+	int ret =  LimaoApi_downloadExt(hash_name,0,100*1024,1000);
+	if(ret != 0)
+	{
+		printf_log(LOG_ERROR,
+				   "mediafile downld module init",
+				   "check_media_type_for_file_data p2p download  100*1024 data failed .\n",
+				   NULL);
+		return -1;
+	}
+	char  local_file_name[256] = {0};
+	LimaoApi_getFilePath(hash_name, local_file_name);
+	if(local_file_name[0] == 0)
+	{
+		printf_log(LOG_ERROR,
+				   "mediafile downld module init",
+				   "check_media_type_for_file_data get file path failed .\n",
+				   NULL);
+		return -1;
+	}
+
+	FILE * pFile = fopen(local_file_name,"rb");
+	if(pFile == NULL)
+	{
+		printf_log(LOG_ERROR,
+				   "mediafile downld module init",
+				   "check_media_type_for_file_data open file failed .\n",
+				   NULL);
+		return -1;
+	}
+	unsigned char readBuf[100] = {0};
+
+	ret = fread(readBuf,1,100,pFile);
+	if(ret != 100)
+	{
+		printf_log(LOG_ERROR,
+				   "mediafile downld module init",
+				   "check_media_type_for_file_data fread file failed .\n",
+				   NULL);
+		fclose(pFile);
+		pFile = NULL;
+		return -1;
+	}
+
+	if((readBuf[4] == 0x66) && (readBuf[5] == 0x74) && (readBuf[6] == 0x79) && (readBuf[7] == 0x70))
+	{
+
+		printf_log(LOG_INFO,
+				   "mediafile downld module init",
+				   "check_media_type_for_file_data  check MP4\n",
+				   NULL);
+		fclose(pFile);
+		fclose(pFile);
+		pFile = NULL;
+		return MP4;
+	}else if((readBuf[0] == 0x2E) && (readBuf[1] == 0x52) && (readBuf[2] == 0x4D) && (readBuf[3] == 0x46)) // 2E 52 4D 46
+	{
+		printf_log(LOG_INFO,
+				   "mediafile downld module init",
+				   "check_media_type_for_file_data  check RMVB\n",
+				   NULL);
+		fclose(pFile);
+		fclose(pFile);
+		pFile = NULL;
+		return RMVB;
+	}
+	printf_log(LOG_INFO,
+			   "mediafile downld module init",
+			   "check_media_type_for_file_data  not check file type\n",
+			   NULL);
+	return -1;
 }

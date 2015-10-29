@@ -15,7 +15,7 @@
 #include "ijksdl/ijksdl_thread.h"
 #include "ijksdl/ijksdl_log.h"
 #include "ijksdl/android/ijksdl_android_jni.h"
-
+#include "../mediadownloadmodule/mediafile_download_log.h"
 //
 
 #define JNI_CLASS_PLAY_MANAGER "com/limaoso/phonevideo/playmanager/PlayManager"
@@ -145,7 +145,6 @@ int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeo
 {
 	int ret = 0;
 
-	__android_log_print(ANDROID_LOG_DEBUG, "LimaoApi_downloadExt()", "offset = %lld, size = %lld", offset, size);
 
 	JNIEnv *env = NULL;
 
@@ -160,7 +159,9 @@ int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeo
 
 	jstring str = (*env)->NewStringUTF(env, fileHash);
 
-	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, offset, size, timeout);
+	jlong tmpoffset = offset;
+	jlong tmpsize = size;
+	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, tmpoffset, tmpsize, timeout);
 
 	(*env)->DeleteLocalRef(env, str);
 

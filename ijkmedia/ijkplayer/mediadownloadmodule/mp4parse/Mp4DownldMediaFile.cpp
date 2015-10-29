@@ -73,6 +73,7 @@ int Mp4DownldMediaFile::Mp4CheckBoxType( char* buf)
 }
 bool Mp4DownldMediaFile::PraseRootBox()
 {
+	int ret = -1;
 	unsigned char readBuf[100] = { 0 };
 	_current = 0;
 	if(0 != P2pDownloadMediaData(0,MEDIAFILEPARSELEN))
@@ -101,14 +102,25 @@ bool Mp4DownldMediaFile::PraseRootBox()
 				   	pMediaFileDownldLog);
 		return false;
 	}
-
+	char logbuf[100] ={ 0 };
 	_end = LimaoApi_getFileSize(_mediaFileHash);
+	sprintf(logbuf,"media file size %llu",_end);
+	if(_pPlayerMediaFile == NULL)
+	{
+		printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+				   "mp4 download parse root box type and size",
+				   "open the media file failed.",
+				   	pMediaFileDownldLog);
+		return false;
+	}
+
+
+	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+				   "mp4 download parse root box type and size",
+				   logbuf,
+				   	pMediaFileDownldLog);
 	if(_end <= 0)
 	{
-		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
-				   "mp4 download parse root box type and size",
-				   "get p2p download media file size failed.\n",
-				   	pMediaFileDownldLog);
 		return false;
 	}
 
@@ -142,6 +154,7 @@ bool Mp4DownldMediaFile::PraseRootBox()
 	{
 		return false;
 	}
+
 	if(0 != fseek(_pPlayerMediaFile, blockSize, SEEK_SET))
 	{
 		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,

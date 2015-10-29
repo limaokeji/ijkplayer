@@ -6,7 +6,6 @@
 #include <string.h>
 #include "mediafile_download_log.h"
 #include "../android/limao_api_jni.h"
-
 DownldMediaFile::DownldMediaFile()
 {
 	_mediaFileHash = new char[FILENAMELEN];
@@ -69,11 +68,16 @@ int DownldMediaFile::P2pDownloadMediaData(long offset, int64_t blockSize)
 	int ret =  LimaoApi_downloadExt(_mediaFileHash,offset,blockSize,1000);
 	if(ret != 0)
 	{
-		printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+		sprintf(logbuf,"offset %ld,  block size %llu  error %d",offset,blockSize,ret);
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 							   "p2p download file data",
-							   "LimaoApi_downloadExt failed.",
+							   logbuf,
 							   	pMediaFileDownldLog);
 	}
+	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+						   "DownldMediaFile::P2pDownloadMediaData ",
+						   "P2pDownloadMediaData complete",
+						   	pMediaFileDownldLog);
 	return ret;
 }
 /*bool DownldMediaFile::CopyFileData(long offset, int64_t blockSize)
