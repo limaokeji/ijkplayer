@@ -18,9 +18,8 @@
 #include "ijksdl/android/ijksdl_android_jni.h"
 #include "../mediadownloadmodule/mediafile_downld_module.h"
 #include "../mediadownloadmodule/mediafile_download_log.h"
-static pthread_key_t pthread_key_1;
 
-void LimaoApi_download(char *fileHash, int index, int64_t offset, int64_t size);
+static pthread_key_t pthread_key_1;
 
 static void start_routine_new(ThreadLocalData_t *pData)
 {
@@ -33,12 +32,12 @@ static void start_routine_new(ThreadLocalData_t *pData)
 	//pthread_key_create(&pthread_key_1, NULL);
 	pthread_setspecific (pthread_key_1, pData);
 
-	// ��ں����������
+	// thread entry function
 	media_file_download_module_thread((void *)pData);
 
 	//
 
-#if 0 // ���Դ���
+#if 0 // test code
 	for (int i = 0; i < 600; i++)
 	{
 		//LimaoApi_download("fileHash_005", i, i*10, 100);
@@ -109,7 +108,7 @@ static void message_loop_x(JNIEnv *env)
         assert(retval > 0);
 
         switch (msg.what) {
-        case FFP_MSG_FLUSH: // �������Ϣ���н��յĵ�һ����Ϣ
+        case FFP_MSG_FLUSH: // first msg to queue
             ALOGD("LimaoApi: message_loop_x(): FFP_MSG_FLUSH");
             break;
 
@@ -261,7 +260,7 @@ static void message_loop_x(JNIEnv *env)
 
         }
         
-        //FIXME: �ͷ��ڴ�
+        //FIXME: free msg mem
     }
 
 }

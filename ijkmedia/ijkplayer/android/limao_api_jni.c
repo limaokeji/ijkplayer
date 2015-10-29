@@ -16,7 +16,6 @@
 #include "ijksdl/ijksdl_log.h"
 #include "ijksdl/android/ijksdl_android_jni.h"
 #include "../mediadownloadmodule/mediafile_download_log.h"
-//
 
 #define JNI_CLASS_PLAY_MANAGER "com/limaoso/phonevideo/playmanager/PlayManager"
 
@@ -140,10 +139,11 @@ void LimaoApi_bufferingUpdate(char *fileHash, int percent)
 	(*env)->DeleteLocalRef(env, str);
 }
 
-#if 0
-void LimaoApi_download(char *fileHash, int index, int64_t offset, int64_t size)
+int LimaoApi_download(char *fileHash, int64_t offset, int64_t size)
 {
 //	LimaoApi_postMsgToUI(LM_MSG_DOWNLOAD_REQ, NULL, 0, 0);
+
+	int ret = 0;
 
 	JNIEnv *env = NULL;
 
@@ -158,11 +158,17 @@ void LimaoApi_download(char *fileHash, int index, int64_t offset, int64_t size)
 
 	jstring str = (*env)->NewStringUTF(env, fileHash);
 
-	(*env)->CallStaticVoidMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_download, str, index, offset, size);
+	jlong tmp_offset = offset;
+	jlong tmp_size = size;
+	//(*env)->CallStaticVoidMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_download, str, offset, size);
+	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_download, str, offset, size);
 	
 	(*env)->DeleteLocalRef(env, str);
+	
+	ALOGD("LimaoApi_download: fileHash | offset | size | ret = %s %lld %lld %d", fileHash, offset, size, ret);
+	
+	return ret;
 }
-#endif
 
 int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeout)
 {
@@ -181,16 +187,14 @@ int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeo
 
 	jstring str = (*env)->NewStringUTF(env, fileHash);
 
-
 	jlong tmp_offset = offset;
 	jlong tmp_size = size;
 	//ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, offset, size, timeout);
 	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, tmp_offset, tmp_size, timeout);
 
-
 	(*env)->DeleteLocalRef(env, str);
 
-	__android_log_print(ANDROID_LOG_DEBUG, "LimaoApi_downloadExt()", "offset = %lld, size = %lld ret = %d", offset, size, ret);
+	ALOGD("LimaoApi_downloadExt: fileHash | offset | size | ret = %s %lld %lld %d", fileHash, offset, size, ret);
 
 	return ret;
 }
@@ -460,7 +464,7 @@ int LimaoApi_global_init(JavaVM *jvm, JNIEnv *env)
         "c2j_bufferingUpdate", "(Ljava/lang/String;I)V");
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_download, g_clazz.clazz,
-        "c2j_download", "(Ljava/lang/String;IJJ)V");
+        "c2j_download", "(Ljava/lang/String;JJ)I");
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_downloadExt, g_clazz.clazz,
         "c2j_downloadExt", "(Ljava/lang/String;JJI)I");

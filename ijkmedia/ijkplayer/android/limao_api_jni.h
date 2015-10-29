@@ -57,6 +57,8 @@ void LimaoApi_prepareOK(char *fileHash);
 
 void LimaoApi_bufferingUpdate(char *fileHash, int percent);
 
+int LimaoApi_download(char *fileHash, int64_t offset, int64_t size);
+
 int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeout);
 
 /*
