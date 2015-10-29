@@ -25,6 +25,7 @@ typedef struct limao_api_fields_t {
 
 	jmethodID jmid_c2j_postMsgToUI;
 	jmethodID jmid_c2j_prepareOK;
+	jmethodID jmid_c2j_bufferingUpdate;
 	jmethodID jmid_c2j_download;
 	jmethodID jmid_c2j_downloadExt;
 	jmethodID jmid_c2j_isDownload;
@@ -117,6 +118,28 @@ void LimaoApi_prepareOK(char *fileHash)
 	(*env)->DeleteLocalRef(env, str);
 }
 
+void LimaoApi_bufferingUpdate(char *fileHash, int percent)
+{
+//	LimaoApi_postMsgToUI(LM_MSG_BUFFERING_UPDATE, NULL, 0, 0);
+
+	JNIEnv *env = NULL;
+
+	if (g_env_flag == 1)
+	{
+		env = g_env;
+	} else {
+		pthread_key_t key = LimaoApi_get_pthread_key();
+		ThreadLocalData_t *tld = pthread_getspecific(key);
+		JNIEnv *env = tld->env;
+	}
+
+	jstring str = (*env)->NewStringUTF(env, fileHash);
+
+	(*env)->CallStaticVoidMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_bufferingUpdate, str, percent);
+
+	(*env)->DeleteLocalRef(env, str);
+}
+
 #if 0
 void LimaoApi_download(char *fileHash, int index, int64_t offset, int64_t size)
 {
@@ -145,7 +168,6 @@ int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeo
 {
 	int ret = 0;
 
-
 	JNIEnv *env = NULL;
 
 	if (g_env_flag == 1)
@@ -159,11 +181,16 @@ int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeo
 
 	jstring str = (*env)->NewStringUTF(env, fileHash);
 
-	jlong tmpoffset = offset;
-	jlong tmpsize = size;
-	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, tmpoffset, tmpsize, timeout);
+
+	jlong tmp_offset = offset;
+	jlong tmp_size = size;
+	//ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, offset, size, timeout);
+	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, tmp_offset, tmp_size, timeout);
+
 
 	(*env)->DeleteLocalRef(env, str);
+
+	__android_log_print(ANDROID_LOG_DEBUG, "LimaoApi_downloadExt()", "offset = %lld, size = %lld ret = %d", offset, size, ret);
 
 	return ret;
 }
@@ -312,7 +339,7 @@ static void message_loop_n(JNIEnv *env)
             break;
 				#endif
 
-        case FFP_MSG_FLUSH: // 这个是消息队列接收的第一个消息
+        case FFP_MSG_FLUSH: // first msg to queue
         	ALOGD("LimaoApi: message_loop_n(): FFP_MSG_FLUSH");
 			//
             break;
@@ -338,7 +365,7 @@ static void message_loop_n(JNIEnv *env)
 
         }
         
-        //FIXME: 释放内存
+        //FIXME: free msg mem
     }
 
 LABEL_RETURN:
@@ -428,6 +455,9 @@ int LimaoApi_global_init(JavaVM *jvm, JNIEnv *env)
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_prepareOK, g_clazz.clazz,
         "c2j_prepareOK", "(Ljava/lang/String;)V");
+
+    IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_bufferingUpdate, g_clazz.clazz,
+        "c2j_bufferingUpdate", "(Ljava/lang/String;I)V");
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_download, g_clazz.clazz,
         "c2j_download", "(Ljava/lang/String;IJJ)V");
