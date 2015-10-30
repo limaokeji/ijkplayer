@@ -115,7 +115,6 @@ static void message_loop_x(JNIEnv *env)
         case LM_MSG_PREPARE_TO_PLAY:  //user want to paly . begin to downlaod
         	ALOGD("LimaoApi: message_loop_x(): LM_MSG_PREPARE_TO_PLAY");
 
-
         	param = msg.data;
         	mediafile_hash = param->fileHash;
         	suffix_name = param->filenameExtension;
@@ -140,7 +139,6 @@ static void message_loop_x(JNIEnv *env)
         				   	NULL);
         	if(!mediafile_downld_module_getrootbox_offset())
         	{
-
         		printf_log(LOG_ERROR,
         			   "ijkplayer media file download medule thread",
         			   "mediafile download module get root box offset failed.\n",
@@ -164,32 +162,33 @@ static void message_loop_x(JNIEnv *env)
 
         	if(!mediafile_downld_module_download_mediadatablock(0))
         	{
-        				printf_log(LOG_ERROR,
-        					   "ijkplayer media file download medule thread",
-        					   "mediafile download block failed.\n",
-        					   	NULL);
+				printf_log(LOG_ERROR,
+					   "ijkplayer media file download medule thread",
+					   "mediafile download block failed --- 0.\n",
+					   	NULL);
         	}
            	if(!mediafile_downld_module_download_mediadatablock(1))
 			{
-						printf_log(LOG_ERROR,
-							   "ijkplayer media file download medule thread",
-							   "mediafile download block failed.\n",
-								NULL);
+				printf_log(LOG_ERROR,
+					   "ijkplayer media file download medule thread",
+					   "mediafile download block failed --- 1.\n",
+						NULL);
 			}
            	if(!mediafile_downld_module_download_mediadatablock(2))
 			{
-						printf_log(LOG_ERROR,
-							   "ijkplayer media file download medule thread",
-							   "mediafile download block failed.\n",
-								NULL);
+				printf_log(LOG_ERROR,
+					   "ijkplayer media file download medule thread",
+					   "mediafile download block failed --- 2.\n",
+						NULL);
 			}
            	LimaoApi_prepareOK(mediafile_hash);
+
+			LimaoApi_download(mediafile_hash, 0, LimaoApi_getFileSize(mediafile_hash)); // _test
 
            	msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_P2P_DOWNLOAD_BLOCK, 3);
             break;
 
         case LM_MSG_P2P_DOWNLOAD_BLOCK:
-
 
         	block_index  = msg.arg1;
         	ALOGI("LM_MSG_P2P_WONDLOAD_BLOCK in. %d.",block_index);
@@ -220,7 +219,7 @@ static void message_loop_x(JNIEnv *env)
 					   "mediafile download complete.\n",
 					   	NULL);
         	}
-        		break;
+        	break;
 
         case LM_MSG_PLAYER_SEEK:
         	block_index = msg.arg1;
