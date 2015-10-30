@@ -18,9 +18,8 @@
 #include "ijksdl/android/ijksdl_android_jni.h"
 #include "../mediadownloadmodule/mediafile_downld_module.h"
 #include "../mediadownloadmodule/mediafile_download_log.h"
-static pthread_key_t pthread_key_1;
 
-void LimaoApi_download(char *fileHash, int index, int64_t offset, int64_t size);
+static pthread_key_t pthread_key_1;
 
 static void start_routine_new(ThreadLocalData_t *pData)
 {
@@ -33,12 +32,12 @@ static void start_routine_new(ThreadLocalData_t *pData)
 	//pthread_key_create(&pthread_key_1, NULL);
 	pthread_setspecific (pthread_key_1, pData);
 
-	// ��ں����������
+	// thread entry function
 	media_file_download_module_thread((void *)pData);
 
 	//
 
-#if 0 // ���Դ���
+#if 0 // test code
 	for (int i = 0; i < 600; i++)
 	{
 		//LimaoApi_download("fileHash_005", i, i*10, 100);
@@ -118,13 +117,12 @@ static void message_loop_x(JNIEnv *env)
         assert(retval > 0);
 
         switch (msg.what) {
-        case FFP_MSG_FLUSH: // �������Ϣ���н��յĵ�һ����Ϣ
+        case FFP_MSG_FLUSH: // first msg to queue
             ALOGD("LimaoApi: message_loop_x(): FFP_MSG_FLUSH");
             break;
 
         case LM_MSG_PREPARE_TO_PLAY:  //user want to paly . begin to downlaod
         	ALOGD("LimaoApi: message_loop_x(): LM_MSG_PREPARE_TO_PLAY");
-
 
         	param = msg.data;
         	mediafile_hash = param->fileHash;
@@ -150,7 +148,6 @@ static void message_loop_x(JNIEnv *env)
         				   	NULL);
         	if(!mediafile_downld_module_getrootbox_offset())
         	{
-
         		printf_log(LOG_ERROR,
         			   "ijkplayer media file download medule thread",
         			   "mediafile download module get root box offset failed.\n",
@@ -174,32 +171,33 @@ static void message_loop_x(JNIEnv *env)
 
         	if(!mediafile_downld_module_download_mediadatablock(0))
         	{
-        				printf_log(LOG_ERROR,
-        					   "ijkplayer media file download medule thread",
-        					   "mediafile download block failed.\n",
-        					   	NULL);
+				printf_log(LOG_ERROR,
+					   "ijkplayer media file download medule thread",
+					   "mediafile download block failed --- 0.\n",
+					   	NULL);
         	}
            	if(!mediafile_downld_module_download_mediadatablock(1))
 			{
-						printf_log(LOG_ERROR,
-							   "ijkplayer media file download medule thread",
-							   "mediafile download block failed.\n",
-								NULL);
+				printf_log(LOG_ERROR,
+					   "ijkplayer media file download medule thread",
+					   "mediafile download block failed --- 1.\n",
+						NULL);
 			}
            	if(!mediafile_downld_module_download_mediadatablock(2))
 			{
-						printf_log(LOG_ERROR,
-							   "ijkplayer media file download medule thread",
-							   "mediafile download block failed.\n",
-								NULL);
+				printf_log(LOG_ERROR,
+					   "ijkplayer media file download medule thread",
+					   "mediafile download block failed --- 2.\n",
+						NULL);
 			}
            	LimaoApi_prepareOK(mediafile_hash);
+
+			LimaoApi_download(mediafile_hash, 0, LimaoApi_getFileSize(mediafile_hash)); // _test
 
            	msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_P2P_DOWNLOAD_BLOCK, 3);
             break;
 
         case LM_MSG_P2P_DOWNLOAD_BLOCK:
-
 
         	block_index  = msg.arg1;
         	ALOGI("LM_MSG_P2P_WONDLOAD_BLOCK in. %d.",block_index);
@@ -276,7 +274,7 @@ static void message_loop_x(JNIEnv *env)
 
         }
         
-        //FIXME: �ͷ��ڴ�
+        //FIXME: free msg mem
     }
 
 }
