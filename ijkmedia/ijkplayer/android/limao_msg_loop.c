@@ -96,8 +96,17 @@ static void message_loop_x(JNIEnv *env)
 
 
 	pthread_key_create(&pthread_key_1, NULL);
-
+	int quit = 0;
     while (1) {
+
+    	if(quit != 0)
+    	{
+    		printf_log(LOG_INFO,
+    			   "ijkplayer media file download medule thread",
+    			   "QUIT \n",
+    			   	NULL);
+    		break;
+    	}
         AVMessage msg;
 
         int retval = msg_queue_get(LimaoApi_get_msg_queue(), &msg, 1);
@@ -208,6 +217,8 @@ static void message_loop_x(JNIEnv *env)
 					   "ijkplayer media file download medule thread",
 					   "mediafile download block failed.\n",
 					   	NULL);
+				msg_queue_put_simple1(LimaoApi_get_msg_queue(), LM_MSG_QUIT_THREAD);
+				break;
         	}
 
         	if(block_index<block_count)
@@ -221,7 +232,7 @@ static void message_loop_x(JNIEnv *env)
 					   "mediafile download complete.\n",
 					   	NULL);
         	}
-        		break;
+        	break;
 
         case LM_MSG_PLAYER_SEEK:
         	block_index = msg.arg1;
@@ -254,6 +265,10 @@ static void message_loop_x(JNIEnv *env)
 						NULL);
 			}
 
+        	break;
+
+        case LM_MSG_QUIT_THREAD:
+        	quit = 1;
         	break;
         default:
             ALOGD("LimaoApi: unknown msg: %d", msg.what);

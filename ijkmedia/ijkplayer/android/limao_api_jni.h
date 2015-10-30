@@ -28,6 +28,8 @@ extern "C" {
 
 #define LM_MSG_PLAYER_SEEK   11003
 
+#define LM_MSG_QUIT_THREAD   11004
+
 
 
 //22000

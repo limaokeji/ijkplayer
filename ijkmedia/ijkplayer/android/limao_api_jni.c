@@ -190,8 +190,6 @@ int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeo
 
 	(*env)->DeleteLocalRef(env, str);
 
-	__android_log_print(ANDROID_LOG_DEBUG, "LimaoApi_downloadExt()", "offset = %lld, size = %lld ret = %d", offset, size, ret);
-
 	return ret;
 }
 

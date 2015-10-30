@@ -105,7 +105,6 @@ int RmvbPrase::HandleIndxChunk(unsigned int size, short * pstream_number)
 }
 void RmvbPrase::HandleSubDataChunk()
 {
-	printf("Data packet: \n");
 	if (readshort("version") == 0) {
 		int size = readshort("length");
 		short s_n = readshort("stream_number");
@@ -117,12 +116,17 @@ void RmvbPrase::HandleSubDataChunk()
 }
 void RmvbPrase::HandleIndxRecord(INDEXRECORD* pIndexRecord)
 {
-	printf("Index record: %d\n");
 	if (readshort("version") == 0) {
 		pIndexRecord->timeStamp = readint("timestamp");
 		pIndexRecord ->offset =  readint("offset");
 		pIndexRecord->smapleId =  readint("packet_count_for_this_packet");
 	}
+	/*char logBuf[200] = {0};
+	sprintf(logBuf,"rmvb parse offset %ld",pIndexRecord ->offset);
+	printf_log(LOG_INFO,
+						   "rmvb download file play info",
+						   logBuf,
+						   	NULL);*/
 }
 #define strcmp strcasecmp
 void RmvbPrase::HandleChunk(char* tagID, unsigned int size)
@@ -247,8 +251,6 @@ int RmvbPrase::readint(char* name)
 	}
 
 	t = ntohl(t);
-	printf("\t%s is %d\n", name, t);
-
 	return t;
 }
 char RmvbPrase::readchar(unsigned int size, char* name, bool bchar)

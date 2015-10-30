@@ -73,6 +73,7 @@ int DownldMediaFile::P2pDownloadMediaData(long offset, int64_t blockSize)
 							   "p2p download file data",
 							   logbuf,
 							   	pMediaFileDownldLog);
+		return ret;
 	}
 	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
 						   "DownldMediaFile::P2pDownloadMediaData ",

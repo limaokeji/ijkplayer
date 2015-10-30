@@ -352,9 +352,11 @@ bool RmvbDownldMediaFile::DownloadMdatBlock(int index)
 	}
 	if (endOffset <= startOffset)
 	{
+		char logbuf[200] = {0};
+		sprintf(logbuf,"the block offset is %llu  %llu",_downloadBlockInfoList[index].offset ,_downloadBlockInfoList[index + 1].offset);
 		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 				   "download the rmvb file a block media data",
-				   "the block offset or size is invalid.\n",
+				   logbuf,
 					pMediaFileDownldLog);
 		return false;
 	}
@@ -365,6 +367,7 @@ bool RmvbDownldMediaFile::DownloadMdatBlock(int index)
 				   "download the mp4 file a block media data",
 				   "the p2p module downlaod failed.\n",
 					pMediaFileDownldLog);
+		return false;
 	}
 	_downloadBlockInfoList[index].isDownload = true;
 
