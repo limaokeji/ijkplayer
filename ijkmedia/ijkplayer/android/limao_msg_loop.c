@@ -88,8 +88,8 @@ static void message_loop_x(JNIEnv *env)
 {
 	int block_count;
 	int block_index = 0;
-	char * mediafile_hash ;
-	char * suffix_name ;
+	char * mediafile_hash;
+	char * suffix_name;
 	limao_api_param_4_prepareToPlay_t *param;
 	DOWNLOADBLOCKINFO * pdownload_blockinfo_list = NULL;
 
@@ -97,7 +97,7 @@ static void message_loop_x(JNIEnv *env)
 
 	int quit = 0;
     while (1) {
-
+#if 0
     	if(quit != 0)
     	{
     		printf_log(LOG_INFO,
@@ -106,6 +106,7 @@ static void message_loop_x(JNIEnv *env)
     			   	NULL);
     		break;
     	}
+#endif
         AVMessage msg;
 
         int retval = msg_queue_get(LimaoApi_get_msg_queue(), &msg, 1);
@@ -121,9 +122,11 @@ static void message_loop_x(JNIEnv *env)
             ALOGD("LimaoApi: message_loop_x(): FFP_MSG_FLUSH");
             break;
 
-        case LM_MSG_PREPARE_TO_PLAY:  //user want to paly . begin to downlaod
+        case LM_MSG_PREPARE_TO_PLAY: // user want to play . begin to download
         	ALOGD("LimaoApi: message_loop_x(): LM_MSG_PREPARE_TO_PLAY");
-        	msg_queue_flush(LimaoApi_get_msg_queue()); // remove all msg
+
+			msg_queue_flush(LimaoApi_get_msg_queue()); // remove all msg
+
         	param = msg.data;
         	mediafile_hash = param->fileHash;
         	suffix_name = param->filenameExtension;
@@ -296,9 +299,10 @@ static void message_loop_x(JNIEnv *env)
 
         	break;
 
-        case LM_MSG_QUIT_THREAD:
-        	quit = 1;
-        	break;
+        //case LM_MSG_QUIT_THREAD:
+        	//quit = 1;
+        	//break;
+
         default:
             ALOGD("LimaoApi: unknown msg: %d", msg.what);
             break;
