@@ -2574,6 +2574,7 @@ static int read_thread(void *arg)
             if (!isBlockDownload(timestamp + one_second_timestamp)) // FIXME
 			{
             	__android_log_print(ANDROID_LOG_ERROR,"lmk test","lmk seek is not BlockDownload send_download_req");
+
 				send_download_req(timestamp_2_blockIndex(timestamp + one_second_timestamp));
 				if(ffp->is->pause_req == 0)
 				{

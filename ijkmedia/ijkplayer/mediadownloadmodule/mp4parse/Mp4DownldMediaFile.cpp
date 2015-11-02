@@ -589,7 +589,7 @@ bool Mp4DownldMediaFile::DownloadMdatBlock(int index)
 	_downloadBlockInfoList[index].isDownload = true;
 
 	char log[300] = {0};
-	sprintf(log," download the %d block , size is %ld,the endtime is %u\n", index, size/1024, _downloadBlockInfoList[index].timeStamp);
+	sprintf(log," download the %d block , size is %ld,the endtime is %u\n", index, size, _downloadBlockInfoList[index].timeStamp);
 	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
 			   "download the mp4 file a block media data",
 				log,
