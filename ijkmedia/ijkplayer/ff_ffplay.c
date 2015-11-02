@@ -2564,7 +2564,7 @@ static int read_thread(void *arg)
 
             if (!isBlockDownload(timestamp + one_second_timestamp)) // FIXME
 			{
-				av_log(ffp, AV_LOG_ERROR, "read_thread(): av_read_frame(): ret = -112233\n");
+				av_log(ffp, AV_LOG_ERROR, "read_thread(): av_read_frame(): ret = -334455\n");
 				send_download_req(timestamp_2_blockIndex(timestamp + one_second_timestamp));
 				if(ffp->is->pause_req == 0)
 				{

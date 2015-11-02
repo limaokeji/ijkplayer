@@ -93,8 +93,8 @@ static void message_loop_x(JNIEnv *env)
 	limao_api_param_4_prepareToPlay_t *param;
 	DOWNLOADBLOCKINFO * pdownload_blockinfo_list = NULL;
 
-
 	pthread_key_create(&pthread_key_1, NULL);
+
 	int quit = 0;
     while (1) {
 
@@ -128,10 +128,12 @@ static void message_loop_x(JNIEnv *env)
         	mediafile_hash = param->fileHash;
         	suffix_name = param->filenameExtension;
 
+			LimaoApi_bufferingUpdate(mediafile_hash, 0);
+
         	printf_log(LOG_ERROR,
         			mediafile_hash,
         			suffix_name,
-                			   	NULL);
+                	NULL);
         	if(!mediafile_downld_module_init(mediafile_hash, suffix_name, NULL, 0,
         			&g_pdownload_blockinfo_list, NULL))
         	{
@@ -146,6 +148,8 @@ static void message_loop_x(JNIEnv *env)
         				   "ijkplayer media file download medule thread ",
         				   "mediafile_downld_module_init ok",
         				   	NULL);
+  			LimaoApi_bufferingUpdate(mediafile_hash, 10);
+  			
         	if(!mediafile_downld_module_getrootbox_offset())
         	{
         		printf_log(LOG_ERROR,
@@ -158,6 +162,8 @@ static void message_loop_x(JNIEnv *env)
         				   "ijkplayer media file download medule thread",
         				   "mediafile_downld_module_getrootbox_offset ok",
         				   	NULL);
+        	LimaoApi_bufferingUpdate(mediafile_hash, 20);
+
         	if(!mediafile_downld_module_download_playerinfobox())
         	{
         		printf_log(LOG_ERROR,
@@ -166,6 +172,7 @@ static void message_loop_x(JNIEnv *env)
         			   	NULL);
         		break;
         	}
+        	LimaoApi_bufferingUpdate(mediafile_hash, 30);
 
         	block_count = mediafile_downld_module_getmediadatalock_count();
 
@@ -176,6 +183,7 @@ static void message_loop_x(JNIEnv *env)
 					   "mediafile download block failed --- 0.\n",
 					   	NULL);
         	}
+        	LimaoApi_bufferingUpdate(mediafile_hash, 50);
            	if(!mediafile_downld_module_download_mediadatablock(1))
 			{
 				printf_log(LOG_ERROR,
@@ -183,6 +191,7 @@ static void message_loop_x(JNIEnv *env)
 					   "mediafile download block failed --- 1.\n",
 						NULL);
 			}
+			LimaoApi_bufferingUpdate(mediafile_hash, 70);
            	if(!mediafile_downld_module_download_mediadatablock(2))
 			{
 				printf_log(LOG_ERROR,
@@ -190,6 +199,8 @@ static void message_loop_x(JNIEnv *env)
 					   "mediafile download block failed --- 2.\n",
 						NULL);
 			}
+			LimaoApi_bufferingUpdate(mediafile_hash, 90);
+
            	LimaoApi_prepareOK(mediafile_hash);
 
 			LimaoApi_download(mediafile_hash, 0, LimaoApi_getFileSize(mediafile_hash)); // _test
@@ -235,6 +246,7 @@ static void message_loop_x(JNIEnv *env)
         case LM_MSG_PLAYER_SEEK:
         	block_index = msg.arg1;
         	ALOGI("LM_MSG_PLAYER_SEEK in. %d.",block_index);
+        	LimaoApi_bufferingUpdate(mediafile_hash, 0);
 			if((block_index<0)||(block_index >= block_count))
 			{
 				printf_log(LOG_ERROR,
