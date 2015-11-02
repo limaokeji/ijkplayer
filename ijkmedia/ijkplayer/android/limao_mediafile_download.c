@@ -194,15 +194,23 @@ int timestamp_2_blockIndex(uint64_t timestamp)
 {
 	int download_block_count = mediafile_downld_module_getmediadatalock_count();
 	DOWNLOADBLOCKINFO * download_blockinfo_list = mediafile_downld_module_getblocklistinfo();
-	
+	char logBuf[200] = { 0 };
 	for (int i = 0; i < download_block_count - 1; i++)
 	{
 		if (( timestamp >= download_blockinfo_list[i].timeStamp) && (timestamp < download_blockinfo_list[i+1].timeStamp ))
 		{
+			sprintf(logBuf,"lmk timestamp_2_blockIndex index %d",i);
+			printf_log(LOG_ERROR,
+						   "ijkplayer seek ",
+						   logBuf,
+						   	NULL);
 			return i;
 		}
 	}
-
+	printf_log(LOG_ERROR,
+				   "ijkplayer seek ",
+				   "lmk timestamp_2_blockIndex index -1",
+				   	NULL);
 	return -1;
 }
 

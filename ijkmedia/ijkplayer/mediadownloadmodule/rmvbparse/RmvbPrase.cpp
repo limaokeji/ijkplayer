@@ -120,6 +120,7 @@ void RmvbPrase::HandleIndxRecord(INDEXRECORD* pIndexRecord)
 		pIndexRecord->timeStamp = readint("timestamp");
 		pIndexRecord ->offset =  readint("offset");
 		pIndexRecord->smapleId =  readint("packet_count_for_this_packet");
+		pIndexRecord->isDownload = false;
 	}
 	/*char logBuf[200] = {0};
 	sprintf(logBuf,"rmvb parse offset %ld",pIndexRecord ->offset);
@@ -165,6 +166,7 @@ void RmvbPrase::HandleChunk(char* tagID, unsigned int size)
 									NULL);
 				return;
 			}
+			memset(_pIndexRecord, 0 , num *sizeof(INDEXRECORD));
 			printf_log(LOG_INFO ,
 							"rmvb parsea",
 							"index record new success.",

@@ -123,7 +123,7 @@ static void message_loop_x(JNIEnv *env)
 
         case LM_MSG_PREPARE_TO_PLAY:  //user want to paly . begin to downlaod
         	ALOGD("LimaoApi: message_loop_x(): LM_MSG_PREPARE_TO_PLAY");
-
+        	msg_queue_flush(LimaoApi_get_msg_queue()); // remove all msg
         	param = msg.data;
         	mediafile_hash = param->fileHash;
         	suffix_name = param->filenameExtension;
@@ -192,7 +192,7 @@ static void message_loop_x(JNIEnv *env)
 			}
            	LimaoApi_prepareOK(mediafile_hash);
 
-			LimaoApi_download(mediafile_hash, 0, LimaoApi_getFileSize(mediafile_hash)); // _test
+			LimaoApi_download(mediafile_hash, 0, LimaoApi_getFileSize(mediafile_hash)/10); // _test
 
            	msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_P2P_DOWNLOAD_BLOCK, 3);
             break;
@@ -243,6 +243,25 @@ static void message_loop_x(JNIEnv *env)
 						NULL);
 				break;
 			}
+			DOWNLOADBLOCKINFO * download_blockinfo_list = mediafile_downld_module_getblocklistinfo();
+			if(download_blockinfo_list == NULL)
+			{
+				printf_log(LOG_ERROR,
+					   "ijkplayer media file download medule thread",
+					   "download_blockinfo_list is invalid.\n",
+						NULL);
+				break;
+			}
+			int64_t offset = 0;
+			if((download_blockinfo_list+block_index)->offset <1024)
+			{
+				offset =(download_blockinfo_list+block_index)->offset;
+			}else
+			{
+				offset =(download_blockinfo_list+block_index)->offset  -1024;
+			}
+			LimaoApi_download(mediafile_hash, offset, LimaoApi_getFileSize(mediafile_hash));
+
 			if(!mediafile_downld_module_download_mediadatablock(block_index))
 			{
 				printf_log(LOG_ERROR,
