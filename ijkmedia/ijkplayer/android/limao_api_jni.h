@@ -55,6 +55,8 @@ JavaVM * LimaoApi_get_JVM();
 
 MessageQueue * LimaoApi_get_msg_queue();
 
+int64_t LimaoApi_get_start_time();
+
 void LimaoApi_prepareOK(char *fileHash);
 
 void LimaoApi_bufferingUpdate(char *fileHash, int percent);
