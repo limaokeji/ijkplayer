@@ -61,6 +61,8 @@ static JNIEnv *g_env;
 
 static int g_env_flag = 1; // is use g_env
 
+static int64_t g_startTime = 0; // ms
+
 static limao_api_fields_t g_clazz;
 
 static LimaoJniStruct s_limaoJniStruct;
@@ -76,7 +78,7 @@ static void LimaoApi_postMsgToUI(int msgID, int arg1, int arg2, char *str)
 }
 #endif
 
-static void LimaoApi_prepareToPlay(JNIEnv *env, jclass clazz, jstring fileHash, jstring filenameExtension, jlong fileSize)
+static void LimaoApi_prepareToPlay(JNIEnv *env, jclass clazz, jstring fileHash, jstring filenameExtension, jlong fileSize, jlong startTime)
 {
 	limao_api_param_4_prepareToPlay_t *param = malloc(sizeof(limao_api_param_4_prepareToPlay_t));
 	// FIXME -- malloc --null
@@ -84,10 +86,12 @@ static void LimaoApi_prepareToPlay(JNIEnv *env, jclass clazz, jstring fileHash, 
 	const char *c_fileHash = (*env)->GetStringUTFChars(env, fileHash, NULL);
 	const char *c_filenameExtension = (*env)->GetStringUTFChars(env, filenameExtension, NULL);
 
-	ALOGD("LimaoApi_prepareToPlay: fileHash | filenameExtension | fileSize = %s %s %lld", c_fileHash, c_filenameExtension, fileSize);
+	ALOGD("LimaoApi_prepareToPlay: fileHash | filenameExtension | fileSize | startTime = %s %s %lld %lld", c_fileHash, c_filenameExtension, fileSize, startTime);
 	strcpy(param->fileHash, c_fileHash);
 	strcpy(param->filenameExtension, c_filenameExtension);
 	param->fileSize = fileSize;
+
+	g_startTime = startTime;
 	
 	(*env)->ReleaseStringUTFChars(env, fileHash, c_fileHash);
 	(*env)->ReleaseStringUTFChars(env, filenameExtension, c_filenameExtension);	
@@ -438,7 +442,7 @@ static JNINativeMethod g_methods[] = {
     { "_native_init",            "()V",        (void *) LimaoApi_native_init },
     { "_native_deinit",         "()V",        (void *) LimaoApi_native_deinit },
 
-    { "_prepareToPlay",       "(Ljava/lang/String;Ljava/lang/String;J)V",     (void *) LimaoApi_prepareToPlay },
+    { "_prepareToPlay",       "(Ljava/lang/String;Ljava/lang/String;JJ)V",     (void *) LimaoApi_prepareToPlay },
     { "_downloadFinish",      "(Ljava/lang/String;I)V",                               (void *) LimaoApi_downloadFinish }
 
 };
@@ -487,6 +491,12 @@ JavaVM * LimaoApi_get_JVM()
 MessageQueue * LimaoApi_get_msg_queue()
 {
 	return p_limaoJniStruct->msg_queue;
+}
+
+int64_t LimaoApi_get_start_time()
+{
+	ALOGE("LimaoApi_get_start_time(): %lld", g_startTime);
+	return g_startTime;
 }
 
 // JNI_OnLoad()

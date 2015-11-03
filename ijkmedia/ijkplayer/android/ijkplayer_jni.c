@@ -24,11 +24,15 @@
 #include <string.h>
 #include <pthread.h>
 #include <jni.h>
-#include "ijksdl/ijksdl_log.h"
+
 #include "../ff_ffplay.h"
+#include "../ff_ffplay_def.h"
+#include "../ijkplayer_internal.h"
+
 #include "ffmpeg_api_jni.h"
 #include "ijkplayer_android_def.h"
 #include "ijkplayer_android.h"
+#include "ijksdl/ijksdl_log.h"
 #include "ijksdl/android/android_arraylist.h"
 #include "ijksdl/android/android_bundle.h"
 #include "ijksdl/android/ijksdl_android_jni.h"
@@ -266,6 +270,7 @@ IjkMediaPlayer_release(JNIEnv *env, jobject thiz)
 }
 
 static void IjkMediaPlayer_native_setup(JNIEnv *env, jobject thiz, jobject weak_this);
+
 static void
 IjkMediaPlayer_reset(JNIEnv *env, jobject thiz)
 {
@@ -500,6 +505,8 @@ LABEL_RETURN:
     return jret_bundle;
 }
 
+int64_t LimaoApi_get_start_time();
+
 static void
 IjkMediaPlayer_native_init(JNIEnv *env)
 {
@@ -512,6 +519,8 @@ IjkMediaPlayer_native_setup(JNIEnv *env, jobject thiz, jobject weak_this)
     MPTRACE("%s\n", __func__);
     IjkMediaPlayer *mp = ijkmp_android_create(message_loop);
     JNI_CHECK_GOTO(mp, env, "java/lang/OutOfMemoryError", "mpjni: native_setup: ijkmp_create() failed", LABEL_RETURN);
+
+    //mp->ffplayer->start_time = LimaoApi_get_start_time(); // add by tiangui @ 20151103
 
     jni_set_media_player(env, thiz, mp);
     ijkmp_set_weak_thiz(mp, (*env)->NewGlobalRef(env, weak_this));
