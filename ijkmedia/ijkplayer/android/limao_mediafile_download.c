@@ -226,6 +226,13 @@ int isBlockDownload(uint64_t timestamp)
 	{
 		if (( timestamp >= download_blockinfo_list[i].timeStamp) && (timestamp < download_blockinfo_list[i+1].timeStamp ))
 		{
+			char buf[200] = {0};
+			sprintf(buf,"isBlockDownload timestamp %llu, index is %d isDownload %d",timestamp, i, download_blockinfo_list[i].isDownload ? 1 : 0);
+			if(!download_blockinfo_list[i].isDownload)
+				printf_log(LOG_WARN,
+						   "ijkplayer seek ",
+						   buf,
+						   	NULL);
 			return download_blockinfo_list[i].isDownload;
 		}
 	}

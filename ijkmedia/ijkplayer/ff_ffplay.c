@@ -2595,6 +2595,11 @@ static int read_thread(void *arg)
 					ffp_start_l(ffp);
 					seek_pause = 0;
 					__android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek to start");
+				}else
+				{
+					__android_log_print(ANDROID_LOG_ERROR,"lmk test","lmk seek to start already download");
+
+					send_download_req(timestamp_2_blockIndex(timestamp + one_second_timestamp));
 				}
 			}
 // FIXME the +-2 is due to rounding being not done in the correct direction in generation
@@ -2737,7 +2742,7 @@ static int read_thread(void *arg)
 			}
 			SDL_Delay(2000);
 
-            __android_log_print(ANDROID_LOG_INFO,"lmk test","lmk the read frame is not download, sdl delay 1000 timestamp is %llu + %llu",g_timestamp , one_second_timestamp);
+            __android_log_print(ANDROID_LOG_INFO,"lmk test","lmk the read frame is not download, sdl delay 2000 timestamp is %llu + %llu",g_timestamp , one_second_timestamp);
             continue;
 		}else
 		{
@@ -2755,7 +2760,23 @@ static int read_thread(void *arg)
 
 		if (ret >= 0) {
 			if (pkt->stream_index == is->video_stream) {
-				g_timestamp = pkt->pts;
+
+				if(g_timestamp > 1000)
+				{
+					if(pkt->pts / g_timestamp > 3)
+					{
+						g_timestamp = pkt->pts;
+						__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk av_read_frame pkt->pts is not Normal %llu %llu",g_timestamp, pkt->pts);
+					}else
+					{
+						g_timestamp = pkt->pts;
+					}
+
+				}else
+				{
+					g_timestamp = pkt->pts;
+				}
+
 			}
 		}
 

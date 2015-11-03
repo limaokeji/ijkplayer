@@ -252,11 +252,11 @@ static void message_loop_x(JNIEnv *env)
         	LimaoApi_bufferingUpdate(mediafile_hash, 0);
 			if((block_index<0)||(block_index >= block_count))
 			{
-				printf_log(LOG_ERROR,
+				printf_log(LOG_WARN,
 					   "ijkplayer media file download medule thread",
 					   "the download index is invalid.\n",
 						NULL);
-				break;
+				block_index = 3;
 			}
 			DOWNLOADBLOCKINFO * download_blockinfo_list = mediafile_downld_module_getblocklistinfo();
 			if(download_blockinfo_list == NULL)
@@ -276,6 +276,17 @@ static void message_loop_x(JNIEnv *env)
 				offset =(download_blockinfo_list+block_index)->offset  -1024;
 			}
 			LimaoApi_download(mediafile_hash, offset, LimaoApi_getFileSize(mediafile_hash));
+
+			if(block_index > 1)
+			{
+				if(!mediafile_downld_module_download_mediadatablock(block_index-1))
+				{
+					printf_log(LOG_ERROR,
+						   "ijkplayer media file download medule thread",
+						   "mediafile download block failed.\n",
+							NULL);
+				}
+			}
 
 			if(!mediafile_downld_module_download_mediadatablock(block_index))
 			{

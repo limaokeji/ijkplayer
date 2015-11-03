@@ -108,7 +108,7 @@ DownldMediaFile * get_downld_mediafile(int file_type)
 				g_downld_mediafile = NULL;
 				break;
 			case MKV:
-				//g_downld_mediafile = new MkvDownldMediaFile();
+				g_downld_mediafile = new MkvDownldMediaFile();
 				break;
 			case MPG:
 				g_downld_mediafile = NULL;
@@ -306,7 +306,6 @@ int check_media_type_for_file_data(char * hash_name)
 				   "check_media_type_for_file_data  check MP4\n",
 				   NULL);
 		fclose(pFile);
-		fclose(pFile);
 		pFile = NULL;
 		return MP4;
 	}else if((readBuf[0] == 0x2E) && (readBuf[1] == 0x52) && (readBuf[2] == 0x4D) && (readBuf[3] == 0x46)) // 2E 52 4D 46
@@ -316,9 +315,16 @@ int check_media_type_for_file_data(char * hash_name)
 				   "check_media_type_for_file_data  check RMVB\n",
 				   NULL);
 		fclose(pFile);
-		fclose(pFile);
 		pFile = NULL;
 		return RMVB;
+	}else if((readBuf[0] == 0x1A) && (readBuf[1] == 0x45) && (readBuf[2] == 0xDF) && (readBuf[3] == 0xA3)){  //00000000h: 1A 45 DF A3                                     ; .E撸
+		printf_log(LOG_INFO,
+				   "mediafile downld module init",
+				   "check_media_type_for_file_data  check MKV\n",
+				   NULL);
+		fclose(pFile);
+		pFile = NULL;
+		return MKV;
 	}
 	printf_log(LOG_INFO,
 			   "mediafile downld module init",

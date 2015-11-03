@@ -124,6 +124,7 @@ LOCAL_SRC_FILES += 	 mediadownloadmodule/mp4parse/sources/3gp.cpp \
 			 mediadownloadmodule/mp4parse/sources/rtphint.cpp \
 			 mediadownloadmodule/mp4parse/Mp4DownldMediaFile.cpp \
 			 mediadownloadmodule/rmvbparse/RmvbDownldMediaFile.cpp \
+			 mediadownloadmodule/mkvparse/MkvDownldMediaFile.cpp \
 			 mediadownloadmodule/rmvbparse/RmvbPrase.cpp \
 			 mediadownloadmodule/DownldMediaFile.cpp \
 			 mediadownloadmodule/DataParse.cpp \

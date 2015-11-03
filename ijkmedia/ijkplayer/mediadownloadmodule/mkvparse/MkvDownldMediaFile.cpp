@@ -1,10 +1,7 @@
-#ifdef _WIN32
-#include "stdafx.h"
-#endif
 #include "MkvDownldMediaFile.h"
 #include <stdlib.h>
-#include "../DataType.h"
 #include "../mediafile_download_log.h"
+#include "../../android/limao_api_jni.h"
 MkvDownldMediaFile::MkvDownldMediaFile()
 {
 	_ebmlHeaderBlockSize = 0; //root block
@@ -74,70 +71,145 @@ bool MkvDownldMediaFile::PraseSeekInfoBlock(long offset, int64_t size, unsigned 
 	size = 2
 	SeekPosition = 10 03  (4099)*/
 
-	if (0 != fseek(_pInFile, offset, SEEK_SET))
+	if(0 != P2pDownloadMediaData(offset,size + 10))
 	{
-		printf("MKV downld media file fseek failed.\n");
 		return false;
 	}
-	unsigned char * buffer = new unsigned char[size + 1];
-	memset(buffer, 0, size + 1);
-	if (size != fread(buffer, 1, size, _pInFile))
+	if (0 != fseek(_pPlayerMediaFile, offset, SEEK_SET))
 	{
-		printf("MKV downld media file fread failed.\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "fseek the downlaod file failed.",
+				   	pMediaFileDownldLog);
+		return false;
+	}
+	unsigned char * buffer = new unsigned char[size + 10];
+	memset((void *)buffer, 0, size + 10);
+	if (size +10 != fread(buffer, 1, size +10, _pPlayerMediaFile))
+	{
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "fread the downlaod file failed.",
+				   	pMediaFileDownldLog);
 		delete[] buffer;
 		return false;
 	}
 	if ((buffer[0] != 0x4d) || (buffer[1] != 0xbb))
 	{
-		printf("MKV downld media file Seek Info Block invalid.\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "downld media file Seek Info Block invalid.",
+				   	pMediaFileDownldLog);
 		return false;
 	}
 	if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, buffer))  //Seek 
 	{
-		printf("MKV download media file prase block id size failed.\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "download media file parse block id and size failed.",
+				   	pMediaFileDownldLog);
 		return false;
 	}
-	unsigned char *firstBlockSeekInfo = buffer + idLen + blockSizeBufLen;
+	unsigned char *pBlockSeekInfo = buffer + idLen + blockSizeBufLen;
 	memset(blockId, 0, 10);
 	memset(blockSizeBuf, 0, 10);
 	idLen = 0;
 	blockSizeBufLen = 0;
-	if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, firstBlockSeekInfo)) //seek id   53 AB
+	while ((pBlockSeekInfo[0] == 0x53) && (pBlockSeekInfo[1] == 0xAB))
 	{
-		printf("MKV download media file prase block id size failed.\n");
-		return false;
-	}
-	if ((blockId[0] != 0x53) || (blockId[1] != 0xAB))
-	{
-		printf("MKV download media file prase block id size failed.\n");
-		return false;
-	}
-	memset(blockId, 0, 10);
-	memcpy(blockId, firstBlockSeekInfo + idLen + blockSizeBufLen, 4);
-	ID = MkvCheckBoxType(blockId);
+		if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, pBlockSeekInfo)) //seek id   53 AB
+		{
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "download media file parse block id and size failed.",
+					   	pMediaFileDownldLog);
+			return false;
+		}
+		if ((blockId[0] != 0x53) || (blockId[1] != 0xAB))
+		{
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "download media file parse block id and size failed.",
+					   	pMediaFileDownldLog);
+			return false;
+		}
+		memset(blockId, 0, 10);
+		memcpy(blockId, pBlockSeekInfo + idLen + blockSizeBufLen, 4);
+		ID = MkvCheckBoxType(blockId);
 
 
-	firstBlockSeekInfo = firstBlockSeekInfo + idLen + blockSizeBufLen + 4;
-	memset(blockId, 0, 10);
-	memset(blockSizeBuf, 0, 10);
-	idLen = 0;
-	blockSizeBufLen = 0;
-	if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, firstBlockSeekInfo)) // seek postion 53 AC
-	{
-		printf("MKV download media file prase block id size failed.\n");
-		return false;
-	}
-	int dataSize = GetBlockSize(blockSizeBuf, blockSizeBufLen);
-	if (dataSize <= 0)
-	{
-		printf("MKV download media file prase block id size failed.\n");
-		return false;
-	}
-	unsigned char data[10] = { 0 };
+		pBlockSeekInfo = pBlockSeekInfo + idLen + blockSizeBufLen + 4;
+		memset(blockId, 0, 10);
+		memset(blockSizeBuf, 0, 10);
+		idLen = 0;
+		blockSizeBufLen = 0;
+		if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, pBlockSeekInfo)) // seek postion 53 AC
+		{
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "download media file parse block id and size failed.",
+					   	pMediaFileDownldLog);
+			return false;
+		}
+		int dataSize = GetBlockSize(blockSizeBuf, blockSizeBufLen);
+		if (dataSize <= 0)
+		{
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "download media file parse block id size failed.",
+					   	pMediaFileDownldLog);
+			return false;
+		}
+		unsigned char data[10] = { 0 };
 
-	memcpy(data, firstBlockSeekInfo + idLen + blockSizeBufLen, dataSize);
+		memcpy(data, pBlockSeekInfo + idLen + blockSizeBufLen, dataSize);
 
-	blockSize = GetBlockSize(data, dataSize);
+		blockSize = GetBlockSize(data, dataSize);
+
+		switch (ID)
+		{
+		case  SEGMENT_INFO:
+			_segmentBlockOffset = blockSize + _metaSeekInfoBlockOffset;
+			break;
+		case TRACK:
+			_trackBlockOffset = blockSize + _metaSeekInfoBlockOffset;
+			break;
+		case  CLUSTER:	
+			_clustersBlockOffset = blockSize + _metaSeekInfoBlockOffset;
+			break;
+		case  CUES:
+			_cueingDataBlockOffset = blockSize + _metaSeekInfoBlockOffset;
+			break;
+		default:
+			break;
+		}
+
+
+
+		pBlockSeekInfo = pBlockSeekInfo + idLen + blockSizeBufLen + dataSize;
+
+		if ((pBlockSeekInfo[0] != 0x4D) || (pBlockSeekInfo[1] != 0xBB))
+		{
+			break; //end
+		}
+
+		if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, pBlockSeekInfo))  //Seek 
+		{
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "download media file parse block id size failed.",
+					   	pMediaFileDownldLog);
+			return false;
+		}
+		pBlockSeekInfo = pBlockSeekInfo + idLen + blockSizeBufLen;
+
+
+	}
+	/* 11 4D 9B 74 | 40 3D  | 4D BB | 8B | 53 AB | 84 | 15 49 A9 66
+	   53 AC | 81 | DF      | 4D BB | 8C | 53 AB | 84 | 16 54 AE 6B 
+	   53 AC | 82 | 01 2C   | 4D BB | 8C | 53 AB | 84 | 12 54 C3 67 
+	   53 AC | 82 | 02 0B   | 4D BB | 8E | 53 AB | 84 | 1C 53 BB 6B 
+	   53 AC | 84 | 28 73 14 24 | EC 01 */
 
 	return true;
 
@@ -171,7 +243,10 @@ bool MkvDownldMediaFile::PraseCueTrackPosition(unsigned char * buffer, int len)
 		{
 			if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, buffer + index))  
 			{
-				printf("MKV download media file prase block id size failed.\n");
+				printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+						   "mkv download parse root box type and size",
+						   "download media file prase block id and size failed.\n",
+						   	pMediaFileDownldLog);
 				return false;
 			}
 
@@ -179,13 +254,15 @@ bool MkvDownldMediaFile::PraseCueTrackPosition(unsigned char * buffer, int len)
 
 			int64_t curTrack = GetBlockSize(buffer + index + idLen + blockSizeBufLen, blockSize);
 
-			printf("curTrack is %llu\n", curTrack);
 		}
 		else if (buffer[index] == 0xF1)//CueClusterPosition
 		{
 			if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, buffer + index))
 			{
-				printf("MKV download media file prase block id size failed.\n");
+				printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+						   "mkv download parse root box type and size",
+						   "download media file prase block id and size failed.\n",
+						   	pMediaFileDownldLog);
 				return false;
 			}
 
@@ -194,27 +271,30 @@ bool MkvDownldMediaFile::PraseCueTrackPosition(unsigned char * buffer, int len)
 			int64_t CueClusterPosition = GetBlockSize(buffer + index + idLen + blockSizeBufLen, blockSize);
 
 			_downloadBlockInfoList[_syncSampleCount].offset = CueClusterPosition;
-			printf("CueClusterPosition is %llu\n", CueClusterPosition + _segmentBlockOffset);
 		}
 		else if (buffer[index] == 0xF0)//CueRelativePosition
 		{
 			if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, buffer + index))
 			{
-				printf("MKV download media file prase block id size failed.\n");
+				printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+						   "mkv download parse root box type and size",
+						   "download media file prase block id and size failed.\n",
+						   	pMediaFileDownldLog);
 				return false;
 			}
 
 			blockSize = GetBlockSize(blockSizeBuf, blockSizeBufLen);
 
 			int64_t CueRelativePosition = GetBlockSize(buffer + index + idLen + blockSizeBufLen, blockSize);
-
-			printf("CueRelativePosition is %llu\n", CueRelativePosition);
 		}
 		else  if (buffer[index] == 0xB2)//CueDuration	
 		{
 			if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, buffer + index))
 			{
-				printf("MKV download media file prase block id size failed.\n");
+				printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+						   "mkv download parse root box type and size",
+						   "download media file prase block id and size failed.\n",
+						   	pMediaFileDownldLog);
 				return false;
 			}
 
@@ -222,13 +302,15 @@ bool MkvDownldMediaFile::PraseCueTrackPosition(unsigned char * buffer, int len)
 
 			int64_t CueDuration = GetBlockSize(buffer + index + idLen + blockSizeBufLen, blockSize);
 
-			printf("CueDuration is %llu\n", CueDuration);
 		}
 		else if ((buffer[index] == 0x53) && (buffer[index + 1] == 0x78))//CueBlockNumber
 		{
 			if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, buffer + index))
 			{
-				printf("MKV download media file prase block id size failed.\n");
+				printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+						   "mkv download parse root box type and size",
+						   "download media file prase block id and size failed.\n",
+						   	pMediaFileDownldLog);
 				return false;
 			}
 
@@ -236,13 +318,15 @@ bool MkvDownldMediaFile::PraseCueTrackPosition(unsigned char * buffer, int len)
 
 			int64_t CueBlockNumber = GetBlockSize(buffer + index + idLen + blockSizeBufLen, blockSize);
 
-			printf("CueBlockNumber is %llu\n", CueBlockNumber);
 		}
 		else if (buffer[index] == 0xEA)//CueCodecState	
 		{
 			if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, buffer + index))
 			{
-				printf("MKV download media file prase block id size failed.\n");
+				printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+						   "mkv download parse root box type and size",
+						   "download media file prase block id and size failed.\n",
+						   	pMediaFileDownldLog);
 				return false;
 			}
 
@@ -250,7 +334,6 @@ bool MkvDownldMediaFile::PraseCueTrackPosition(unsigned char * buffer, int len)
 
 			int64_t CueCodecState = GetBlockSize(buffer + index + idLen + blockSizeBufLen, blockSize);
 
-			printf("CueCodecState is %llu\n", CueCodecState);
 		}
 		else if (buffer[index] == 0xDB)//CueReference	
 		{
@@ -273,12 +356,18 @@ bool MkvDownldMediaFile::PraseCuePoint(unsigned char * buffer,int len)
 
 	if (buffer[0] != 0xBB)
 	{
-		printf("MKV downld media file prase CuePoint failed.\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   " download media file prase CuePoint failed.\n",
+				   	pMediaFileDownldLog);
 		return false;
 	}
 	if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, buffer))  //BB CuePoint
 	{
-		printf("MKV download media file prase block id size failed.\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "download media file prase block id and size failed.\n",
+				   	pMediaFileDownldLog);
 		return false;
 	}
 
@@ -292,24 +381,28 @@ bool MkvDownldMediaFile::PraseCuePoint(unsigned char * buffer,int len)
 		blockSizeBufLen = 0;
 		if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, buffer))  // B3 CueTime
 		{
-			printf("MKV download media file prase block id size failed.\n");
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "download media file prase block id and size failed.\n",
+					   	pMediaFileDownldLog);
 			return false;
 		}
 
 		blockSize = GetBlockSize(blockSizeBuf, blockSizeBufLen);
 
 		int64_t timestamp = GetBlockSize(buffer + idLen + blockSizeBufLen, blockSize);
-		printf(" %d CueTime size is %u, timestamp is %llu\n", _syncSampleCount, blockSize, timestamp);
 		_downloadBlockInfoList[_syncSampleCount].timeStamp = timestamp;
 		_downloadBlockInfoList[_syncSampleCount].isDownload = false;
-		//_downloadBlockInfoList[_syncSampleCount].isRequest = false;
 		_downloadBlockInfoList[_syncSampleCount].smapleId = _syncSampleCount;
 		if ((_syncSampleCount % 100 == 0) && (_syncSampleCount >=100))
 		{
 			_downloadBlockInfoList = (DOWNLOADBLOCKINFO*)realloc(_downloadBlockInfoList, sizeof(DOWNLOADBLOCKINFO)* (_syncSampleCount + 102));
 			if (_downloadBlockInfoList == NULL)
 			{
-				printf("MKV download media file realloc blockinfoList memory failed.\n");
+				printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+						   "mkv download parse root box type and size",
+						   "download media file realloc blockinfoList memory failed.\n",
+						   	pMediaFileDownldLog);
 				return false;
 			}
 		}
@@ -324,7 +417,10 @@ bool MkvDownldMediaFile::PraseCuePoint(unsigned char * buffer,int len)
 
 			if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, pBuf))  // B7 cueTrackPosition
 			{
-				printf("MKV download media file prase block id size failed.\n");
+				printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+						   "mkv download parse root box type and size",
+						   "download media file prase block id and size failed.\n",
+						   	pMediaFileDownldLog);
 				return false;
 			}
 
@@ -332,7 +428,10 @@ bool MkvDownldMediaFile::PraseCuePoint(unsigned char * buffer,int len)
 			pBuf = pBuf + idLen + blockSizeBufLen;
 			if (!PraseCueTrackPosition(pBuf, blockSize))
 			{
-				printf("MKV media file down prace cue track position failed.\n");
+				printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+						   "mkv download parse root box type and size",
+						   "download media file prase PraseCueTrackPosition failed.\n",
+						   	pMediaFileDownldLog);
 				return false;
 			}
 		}
@@ -345,7 +444,10 @@ bool MkvDownldMediaFile::PraseCuePoint(unsigned char * buffer,int len)
 
 		if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, buffer))  // B7 cueTrackPosition
 		{
-			printf("MKV download media file prase block id size failed.\n");
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "download media file prase block id and size failed.\n",
+					   	pMediaFileDownldLog);
 			return false;
 		}
 
@@ -353,7 +455,10 @@ bool MkvDownldMediaFile::PraseCuePoint(unsigned char * buffer,int len)
 		buffer = buffer + idLen + blockSizeBufLen;
 		if (!PraseCueTrackPosition(buffer, blockSize))
 		{
-			printf("MKV media file down prace cue track position failed.\n");
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "download media file prase PraseCueTrackPosition failed.\n",
+					   	pMediaFileDownldLog);
 			return false;
 		}
 
@@ -369,16 +474,22 @@ bool MkvDownldMediaFile::GetDownloadOffset(long blockOffset, int64_t blockSize)
 	unsigned char blockSizeBuf[10] = { 0 };
 	int idLen = 0;
 	int blockSizeBufLen = 0;
-	if (0 != fseek(_pInFile, blockOffset, SEEK_SET))
+	if (0 != fseek(_pPlayerMediaFile, blockOffset, SEEK_SET))
 	{
-		printf("MKV downld media file fseek failed.\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "fseek download file failed.\n",
+				   	pMediaFileDownldLog);
 		return false;
 	}
 	unsigned char * buffer = new unsigned char[blockSize + 1];
 	memset(buffer, 0, blockSize + 1);
-	if (blockSize != fread(buffer, 1, blockSize, _pInFile))
+	if (blockSize != fread(buffer, 1, blockSize, _pPlayerMediaFile))
 	{
-		printf("MKV downld media file fread failed.\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "fread download file failed.\n",
+				   	pMediaFileDownldLog);
 		delete[] buffer;
 		return false;
 	}
@@ -404,12 +515,18 @@ bool MkvDownldMediaFile::GetDownloadOffset(long blockOffset, int64_t blockSize)
 
 		if (p[0] != 0xBB)
 		{
-			printf("waring prase block key frame info.\n");
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "parse block key frame info failed.\n",
+					   	pMediaFileDownldLog);
 			break;
 		}
 		if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, p))
 		{
-			printf("MKV download media file prase block id size failed.\n");
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   " download media file prase block id and size failed.\n",
+					   	pMediaFileDownldLog);
 			return false;
 		}
 
@@ -417,7 +534,10 @@ bool MkvDownldMediaFile::GetDownloadOffset(long blockOffset, int64_t blockSize)
 
 		if (!PraseCuePoint(p, blockSize + idLen + blockSizeBufLen))
 		{
-			printf("MKV download media file prase block id size failed.\n");
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   " download media file prase CuePoint block id and size failed.\n",
+					   	pMediaFileDownldLog);
 			return false;
 		}
 		p = blockSize + idLen + blockSizeBufLen + p;
@@ -425,6 +545,7 @@ bool MkvDownldMediaFile::GetDownloadOffset(long blockOffset, int64_t blockSize)
 		_syncSampleCount++;
 	}
 	delete[] buffer;
+	_syncSampleCount--;
 	return true;
 
 }
@@ -436,27 +557,52 @@ bool MkvDownldMediaFile::PraseRootBox()
 	int blockSizeBufLen = 0;
 	unsigned char readBuf[100] = { 0 };
 	_current = 0;
-	if (0 != fseek(_pInFile, 0, SEEK_END))
+
+	_current = 0;
+	if(0 != P2pDownloadMediaData(0,MEDIAFILEPARSELEN))
 	{
-		printf("MKV downld media file fseek failed.\n");
 		return false;
 	}
-	_end = ftell(_pInFile);
-	if (0 != fseek(_pInFile, 0, SEEK_SET))
+
+	LimaoApi_getFilePath(_mediaFileHash, _playMediaFilePath);
+	if(strlen(_playMediaFilePath) == 0)
 	{
-		printf("MKV downld media file fseek failed.\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "get p2p download media file path failed.\n",
+				   	pMediaFileDownldLog);
 		return false;
 	}
-	int len = fread(readBuf, 1, 100, _pInFile);  //EBML header
-	if (len != 100)
+	_pPlayerMediaFile = fopen(_playMediaFilePath,"rb");
+	if(_pPlayerMediaFile == NULL)
+	{
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "open the p2p download media file failed.\n",
+				   	pMediaFileDownldLog);
+		return false;
+	}
+	char logbuf[100] ={ 0 };
+	_end = LimaoApi_getFileSize(_mediaFileHash);
+
+
+	int len = fread(readBuf, 1, MEDIAFILEPARSELEN, _pPlayerMediaFile);  //EBML header
+	if (MEDIAFILEPARSELEN != len)
 	{
 		printf("mp4 download media file prase root box falied\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "fread the download file failed.",
+				   	pMediaFileDownldLog);
 		return false;
 	}
 
 	if(!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, readBuf))
 	{
-		printf("MKV download media file prase block id size failed.\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "parse block id and size failed.",
+				   	pMediaFileDownldLog);
 		return false;
 	}
 
@@ -466,21 +612,36 @@ bool MkvDownldMediaFile::PraseRootBox()
 
 	_ebmlHeaderBlockSize = _current;
 
-	if (0 != fseek(_pInFile, _current, SEEK_SET))
+
+	if(0 != P2pDownloadMediaData(_current,MEDIAFILEPARSELEN))
 	{
-		printf("MKV downld media file fseek failed.\n");
 		return false;
 	}
 
-	len = fread(readBuf, 1, 100, _pInFile);  // segment 
-	if (len != 100)
+	if (0 != fseek(_pPlayerMediaFile,(long) _current, SEEK_SET))
 	{
-		printf("mp4 download media file prase root box falied\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "fseek the downlaod file failed.",
+				   	pMediaFileDownldLog);
+		return false;
+	}
+
+	len = fread(readBuf, 1, MEDIAFILEPARSELEN, _pPlayerMediaFile);  // segment
+	if (len != MEDIAFILEPARSELEN)
+	{
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "fread the download file failed.",
+				   	pMediaFileDownldLog);
 		return false;
 	}
 	if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, readBuf))
 	{
-		printf("MKV download media file prase block id size failed.\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "parse block id and size failed.",
+				   	pMediaFileDownldLog);
 		return false;
 	}
 
@@ -492,6 +653,10 @@ bool MkvDownldMediaFile::PraseRootBox()
 	if (_current != _end)
 	{
 		printf("MKV downld media file is Special.\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "MKV downld media file is Special",
+				   	pMediaFileDownldLog);
 		return false;
 	}
 
@@ -505,26 +670,43 @@ bool MkvDownldMediaFile::PraseRootBox()
 		memset(blockSizeBuf, 0, 10);
 		idLen = 0;
 		blockSizeBufLen = 0;
-		if (0 != fseek(_pInFile, _current, SEEK_SET))
+
+		if(0 != P2pDownloadMediaData(_current,MEDIAFILEPARSELEN))
 		{
-			printf("MKV downld media file fseek failed.\n");
 			return false;
 		}
-		len = fread(readBuf, 1, 100, _pInFile);  //EBML header
-		if (len != 100)
+		if (0 != fseek(_pPlayerMediaFile, _current, SEEK_SET))
 		{
-			printf("mp4 download media file fread failed.\n");
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "fseek the downlaod file failed.<line 597>",
+					   	pMediaFileDownldLog);
+			return false;
+		}
+		len = fread(readBuf, 1, MEDIAFILEPARSELEN, _pPlayerMediaFile);  //EBML header
+		if (len != MEDIAFILEPARSELEN)
+		{
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "fread the download file failed.",
+					   	pMediaFileDownldLog);
 			return false;
 		}
 		if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, readBuf))
 		{
-			printf("MKV download media file prase block id size failed.\n");
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "parse block id and size failed.",
+					   	pMediaFileDownldLog);
 			return false;
 		}
 		blockSize = GetBlockSize(blockSizeBuf, blockSizeBufLen);
 		if (blockSize == 0)
 		{
-			printf("MKV download media file block size is invaild.\n");
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "parse block size failed.",
+					   	pMediaFileDownldLog);
 			return false;
 		}
 		unsigned int boxType = MkvCheckBoxType(blockId);
@@ -540,13 +722,17 @@ bool MkvDownldMediaFile::PraseRootBox()
 			int64_t offset;
 			if (!PraseSeekInfoBlock(_metaSeekInfoBlockOffset + idLen + blockSizeBufLen, _metaSeekInfoBlockSize - idLen - blockSizeBufLen, ID, offset))
 			{
-				printf("prase seek info block failed.\n");
+				printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+						   "mkv download parse root box type and size",
+						   "parse seek info block failed.",
+						   	pMediaFileDownldLog);
 				return false;
 			}
 			offset = offset + _metaSeekInfoBlockOffset;
-			_current = offset;
-			continue;
+			_current = _cueingDataBlockOffset;
+			break;
 		}
+		
 		switch (boxType)
 		{
 		case META_SEEK_INFO:  
@@ -576,16 +762,19 @@ bool MkvDownldMediaFile::PraseRootBox()
 
 			_cueingDataBlockOffset = _current;//child block  Contain the key frame infomation
 			_cueingDataBlockSize = blockSize + idLen + blockSizeBufLen;
-			if (!GetDownloadOffset(_cueingDataBlockOffset + idLen + blockSizeBufLen, blockSize))
-			{
-				printf("MKV download media file get download offset (key frame offset) failed.\n");
-				return false;
-			}
-			break;
+			//if (!GetDownloadOffset(_cueingDataBlockOffset + idLen + blockSizeBufLen, blockSize))
+			//{
+			//	printf("MKV download media file get download offset (key frame offset) failed.\n");
+			//	return false;
+			//}
+			//break;
 		default:
 			if (_otherBlockCount >= 9)
 			{
-				printf("MKV download media file prase block failed.\n");
+				printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+						   "mkv download parse root box type and size",
+						   "download media file prase block failed.",
+						   	pMediaFileDownldLog);
 				return false;
 			}
 			
@@ -614,7 +803,10 @@ bool MkvDownldMediaFile::PraseBlockIdAndSize(unsigned char * blockId, int &idLen
 	while(1){
 		blockId[idLen] = buffer[index++];
 		if (++idLen > 4) {
-			printf("MKV media file download  don't support element IDs over class D\n");
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "media file download  don't support element IDs over class D.",
+					   	pMediaFileDownldLog);
 			return false; // we don't support element IDs over class D
 
 		}
@@ -629,7 +821,10 @@ bool MkvDownldMediaFile::PraseBlockIdAndSize(unsigned char * blockId, int &idLen
 	while (1){
 		blockSize[blockSizeLen] = buffer[index++];
 		if (++blockSizeLen > 8) {
-			printf("MKV media file download  don't support element IDs over class D\n");
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "media file download  don't support element IDs over class D.",
+					   	pMediaFileDownldLog);
 			return false; // we don't support element IDs over class D
 
 		}
@@ -690,150 +885,132 @@ unsigned int MkvDownldMediaFile::MkvCheckBoxType(unsigned char* blockId)
 		}
 	}
 	memcpy(&boxType, blockId, sizeof(int));
-
-	unsigned int tmrp = META_SEEK_INFO;
 	return boxType;
 }
 bool MkvDownldMediaFile::DownloadFileFirst()
 {
-	char writeBuf[1024] = { 0 };
-	CHECK_POINTER_RET(_pOutFile, false);
 
 	//int64_t _ebmlHeaderBlockSize; //root block
-
+	int64_t fileSize = _end;
 	if (_ebmlHeaderBlockSize == 0)
 	{
-		printf("MKV download media file hava no mkvfile header.\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "download media file hava no mkvfile header.",
+				   	pMediaFileDownldLog);
 		return false;
 	}
-	if (_segmentInfoBlockOffset != 0)
+	if (_segmentBlockOffset != 0)
 	{
-		if (0 != P2pDownloadMediaData(0, _segmentInfoBlockOffset))
+		if (0 != P2pDownloadMediaData(0, 1*1024*1024))
 		{
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "download media file header failed.",
+					   	pMediaFileDownldLog);
 			return false;
 		}
 
 	}
-	else if (_segmentInfoBlockOffset != 0)
+	
+
+
+	if (_cueingDataBlockOffset != 0)
 	{
-		if (0 !=P2pDownloadMediaData(0, _segmentInfoBlockOffset))
+		if (0 != P2pDownloadMediaData(_cueingDataBlockOffset, _end - _cueingDataBlockOffset))
 		{
-			return false;
-		}
-	}
-	else
-	{
-		if (0 != P2pDownloadMediaData(0, 100*1024))
-		{
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "download media file key frame info data failed.",
+					   	pMediaFileDownldLog);
 			return false;
 		}
 	}
 
 
-	if ((_segmentBlockOffset == 0) || (_segmentBlockSize == 0))
+	unsigned char blockId[10] = { 0 };
+	unsigned char blockSizeBuf[10] = { 0 };
+	int idLen = 0;
+	int blockSizeBufLen = 0;
+	unsigned char readBuf[100] = { 0 };
+	int64_t blockSize;
+	memset(readBuf, 0, 100);
+	memset(blockId, 0, 10);
+	memset(blockSizeBuf, 0, 10);
+	idLen = 0;
+	blockSizeBufLen = 0;
+	if (0 != fseek(_pPlayerMediaFile, _cueingDataBlockOffset, SEEK_SET))
 	{
-		printf("MKV download media file hava no segment block.\n");
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "fseek downlaod file failed.",
+				   	pMediaFileDownldLog);
+		return false;
+	}
+	int len = fread(readBuf, 1, MEDIAFILEPARSELEN, _pPlayerMediaFile);  //EBML header
+	if (len != MEDIAFILEPARSELEN)
+	{
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "fread downlaod file failed.",
+				   	pMediaFileDownldLog);
+		return false;
+	}
+	if (!PraseBlockIdAndSize(blockId, idLen, blockSizeBuf, blockSizeBufLen, readBuf))
+	{
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "parse block id and size failed.",
+				   	pMediaFileDownldLog);
+		return false;
+	}
+	blockSize = GetBlockSize(blockSizeBuf, blockSizeBufLen);
+	if (blockSize == 0)
+	{
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "parse block size failed.",
+				   	pMediaFileDownldLog);
+		return false;
+	}
+	unsigned int boxType = MkvCheckBoxType(blockId);
+	if (boxType != CUES)
+	{
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "DownloadFileFirst check box type is not CUSE",
+				   	pMediaFileDownldLog);
+		return false;
+	}
+	if (!GetDownloadOffset(_cueingDataBlockOffset + idLen + blockSizeBufLen, blockSize))
+	{
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "DownloadFileFirst get download offset failed.",
+				   	pMediaFileDownldLog);
 		return false;
 	}
 
-
-	//long _metaSeekInfoBlockOffset; //child block
-	//int64_t _metaSeekInfoBlockSize;
-	if ((_metaSeekInfoBlockOffset != 0) && (_metaSeekInfoBlockSize != 0))
+	if (_downloadBlockInfoList == NULL)
 	{
-		if (0 != P2pDownloadMediaData(_metaSeekInfoBlockOffset, _metaSeekInfoBlockSize))
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv download parse root box type and size",
+				   "DownloadFileFirst download block info invalid.",
+				   	pMediaFileDownldLog);
+		return false;
+	}
+
+	if (_downloadBlockInfoList->offset > 1 * 1024 * 1024)
+	{
+		if (0 != P2pDownloadMediaData(0, _downloadBlockInfoList->offset))
 		{
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv download parse root box type and size",
+					   "DownloadFileFirst download mvk file header data failed.",
+					   	pMediaFileDownldLog);
 			return false;
 		}
 	}
-
-
-	//long _segmentInfoBlockOffset;//child block
-	//int64_t _segmentInfoBlockSize;
-	if ((_segmentInfoBlockOffset != 0) && (_segmentInfoBlockSize != 0))
-	{
-		if (0 != P2pDownloadMediaData(_segmentInfoBlockOffset, _segmentInfoBlockSize))
-		{
-			return false;
-		}
-	}
-
-	//long _trackBlockOffset;//child block
-	//int64_t _trackBlockSize;
-	if ((_trackBlockOffset != 0) && (_trackBlockSize != 0))
-	{
-		if (0 != P2pDownloadMediaData(_trackBlockOffset, _trackBlockSize))
-		{
-			return false;
-		}
-	}
-
-	//long _chaptersBlockOffset;//child block
-	//int64_t _chaptersBlockSize;
-	if ((_chaptersBlockOffset != 0) && (_chaptersBlockSize != 0))
-	{
-		if (0 != P2pDownloadMediaData(_chaptersBlockOffset, _chaptersBlockSize))
-		{
-			return false;
-		}
-	}
-
-
-	//long _clustersBlockOffset;//child block the audio video data
-	//int64_t _clustersBlockSize;
-	//long _firstClustersBlockOffset;
-	//int64_t _allClustersBlockSize;
-	//if ((_firstClustersBlockOffset != 0) && (_allClustersBlockSize != 0))
-	//{
-	//	if (!CopyFileData(_firstClustersBlockOffset, _allClustersBlockSize))
-	//	{
-	//		return false;
-	//	}
-	//}
-
-
-	//long _cueingDataBlockOffset;//child block  Contain the key frame infomation
-	//int64_t _cueingDataBlockSize;
-	if ((_cueingDataBlockOffset != 0) && (_cueingDataBlockSize != 0))
-	{
-		if (0 != P2pDownloadMediaData(_cueingDataBlockOffset, _cueingDataBlockSize))
-		{
-			return false;
-		}
-	}
-
-
-	//long _attachmentBlockOffset;//child block
-	//int64_t _attachmentBlockSize;
-	if ((_attachmentBlockOffset != 0) && (_attachmentBlockSize != 0))
-	{
-		if (0 != P2pDownloadMediaData(_attachmentBlockOffset, _attachmentBlockSize))
-		{
-			return false;
-		}
-	}
-
-
-	//long _taggingBlockOffset;//child block
-	//int64_t _taggingBlockSize;
-	if ((_taggingBlockOffset != 0) && (_taggingBlockSize != 0))
-	{
-		if (0 != P2pDownloadMediaData(_taggingBlockOffset, _taggingBlockSize))
-		{
-			return false;
-		}
-	}
-
-	for (int i = 0; i < _otherBlockCount; i++)
-	{
-		if ((_otherBlcokOffset[i] == 0) || (_otherBlockSize[i] == 0))
-			continue;
-		if (0 != P2pDownloadMediaData(_otherBlcokOffset[i], _otherBlockSize[i]))
-		{
-			return false;
-		}
-	}
-
 	return true;
 }
 
@@ -847,7 +1024,7 @@ bool MkvDownldMediaFile::DownloadMdatBlock(int index)
 	unsigned long endOffset;
 	if (index + 1 == _syncSampleCount)
 	{
-		endOffset = _allClustersBlockSize + _clustersBlockOffset - startOffset;
+		endOffset =_cueingDataBlockOffset;
 	}
 	else
 	{
@@ -859,19 +1036,31 @@ bool MkvDownldMediaFile::DownloadMdatBlock(int index)
 
 	if (endOffset <= startOffset)
 	{
-		printf("mp4 download media file offset if invalid\n");
+		char buf[200] = {0};
+		sprintf(buf,"DownloadFileFirst download mvk file header data failed. startoffset: %llu, endoffset: %llu",startOffset, endOffset);
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mkv DownloadMdatBlock",
+				   buf,
+				   	pMediaFileDownldLog);
 		return false;
 	}
 	long size = endOffset - startOffset;
-	if( 0 != P2pDownloadMediaData(startOffset, size))
+	if(0 != P2pDownloadMediaData(startOffset, size))
 	{
+
 		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
-				   "download the mp4 file a block media data",
-				   "the p2p module downlaod failed.\n",
+				   "mkv DownloadMdatBlock",
+				   "DownloadFileFirst download mvk file header data failed.",
 				   	pMediaFileDownldLog);
+		return false;
 	}
 	_downloadBlockInfoList[index].isDownload = true;
-
+	char log[300] = {0};
+	sprintf(log," download the %d block , size is %ld,the endtime is %u\n", index, size, _downloadBlockInfoList[index].timeStamp);
+	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+				   "download the mkv file a block media data",
+					log,
+				   	pMediaFileDownldLog);
 	printf(" download the %d block complte size is %ld,the endtime is %u\n", index, size, _downloadBlockInfoList[index].timeStamp);
 	return true;
 }

@@ -2,7 +2,7 @@
 #define MKVWOWNLDMEDIAFILE_H_
 #include "../DataPrase.h"
 #include "../DownldMediaFile.h"
-#include "../DataType.h"
+
 #define  META_SEEK_INFO  0x114D9B74
 #define  SEGMENT_INFO    0x1549A966
 #define  TRACK			 0x1654AE6B
@@ -72,6 +72,5 @@ public:
 	bool DownloadMdatBlock(int index);
 	int GetMdataBlockCount();
 	bool CheckMdataBlcokDownload(int index);
-	DOWNLOADBLOCKINFO * _downloadBlockInfoList;
 };
 #endif

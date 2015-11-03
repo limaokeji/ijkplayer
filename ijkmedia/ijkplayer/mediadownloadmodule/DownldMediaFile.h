@@ -3,7 +3,7 @@
 #define FILENAMELEN 256
 #define BUFFERSIZE 1024
 #define P2PDOWNLOADTIMEOUT  1000
-#define MEDIAFILEPARSELEN  16
+#define MEDIAFILEPARSELEN  100
 #include <stdio.h>
 #include "DataType.h"
 
