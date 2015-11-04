@@ -165,11 +165,19 @@ bool Mp4DownldMediaFile::PraseRootBox()
 	}
 	_current = ftell(_pPlayerMediaFile);
 	_ftypBlockSize = blockSize;
+	int64_t read_len = 0;
 	while (_current < _end)
 	{
+		if(_current + MEDIAFILEPARSELEN > _end)
+		{
+			read_len = _end - _current;
+		}else
+		{
+			read_len = MEDIAFILEPARSELEN;
+		}
 		memset(readBuf, 0, 100);
-		len = fread(readBuf, 1, MEDIAFILEPARSELEN, _pPlayerMediaFile);
-		if (len <= 8)
+		len = fread(readBuf, 1, read_len, _pPlayerMediaFile);
+		if (len != read_len)
 		{
 			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 					   "mp4 download parse root box type and size",
@@ -224,7 +232,15 @@ bool Mp4DownldMediaFile::PraseRootBox()
 
 		_current = blockSize + _current;
 
-		if(0 != P2pDownloadMediaData(_current ,MEDIAFILEPARSELEN))
+
+		if(_current + MEDIAFILEPARSELEN > _end)
+		{
+			read_len = _end - _current;
+		}else
+		{
+			read_len = MEDIAFILEPARSELEN;
+		}
+		if(0 != P2pDownloadMediaData(_current ,read_len))
 		{
 			return false;
 		}

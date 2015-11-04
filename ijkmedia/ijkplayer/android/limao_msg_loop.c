@@ -133,7 +133,7 @@ static void message_loop_x(JNIEnv *env)
 
 			LimaoApi_bufferingUpdate(mediafile_hash, 0);
 
-        	printf_log(LOG_ERROR,
+        	printf_log(LOG_WARN,
         			mediafile_hash,
         			suffix_name,
                 	NULL);

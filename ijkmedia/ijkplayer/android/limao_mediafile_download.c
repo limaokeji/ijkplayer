@@ -200,7 +200,7 @@ int timestamp_2_blockIndex(uint64_t timestamp)
 		if (( timestamp >= download_blockinfo_list[i].timeStamp) && (timestamp < download_blockinfo_list[i+1].timeStamp ))
 		{
 			sprintf(logBuf,"lmk timestamp_2_blockIndex index %d",i);
-			printf_log(LOG_ERROR,
+			printf_log(LOG_WARN,
 						   "ijkplayer seek ",
 						   logBuf,
 						   	NULL);
@@ -230,7 +230,7 @@ int isBlockDownload(uint64_t timestamp)
 			sprintf(buf,"isBlockDownload timestamp %llu, index is %d isDownload %d",timestamp, i, download_blockinfo_list[i].isDownload ? 1 : 0);
 			if(!download_blockinfo_list[i].isDownload)
 				printf_log(LOG_WARN,
-						   "ijkplayer seek ",
+						   "ijkplayer isBlockDownload ",
 						   buf,
 						   	NULL);
 			return download_blockinfo_list[i].isDownload;

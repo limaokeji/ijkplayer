@@ -255,6 +255,11 @@ int check_media_type_for_file_data(char * hash_name)
 		return -1;
 	}
 
+	printf_log(LOG_INFO,
+			"mediafile downld module init",
+			"check_media_type_for_file_data p2p download  100*1024 data\n",
+			NULL);
+
 	int ret =  LimaoApi_downloadExt(hash_name,0,100*1024,1000);
 	if(ret != 0)
 	{
@@ -264,6 +269,11 @@ int check_media_type_for_file_data(char * hash_name)
 				   NULL);
 		return -1;
 	}
+	printf_log(LOG_INFO,
+			"mediafile downld module init",
+			"check_media_type_for_file_data p2p download  100*1024 data complete\n",
+			NULL);
+
 	char  local_file_name[256] = {0};
 	LimaoApi_getFilePath(hash_name, local_file_name);
 	if(local_file_name[0] == 0)

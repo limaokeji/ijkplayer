@@ -66,6 +66,14 @@
 #include "ijkmeta.h"
 #include "ijksdl/ijksdl_log.h"
 
+typedef struct DownloadBlockInfo
+{
+	unsigned int smapleId;
+	unsigned long offset;
+	uint64_t timeStamp;
+	bool isDownload;
+}DOWNLOADBLOCKINFO;
+
 // FIXME: 9 work around NDKr8e or gcc4.7 bug
 // isnan() may not recognize some double NAN, so we test both double and float
 #if defined(__ANDROID__)
@@ -894,14 +902,6 @@ static void toggle_pause_l(FFPlayer *ffp, int pause_on)
     is->step = 0;
 }
 
-static void toggle_pause_l2(FFPlayer *ffp, int pause_on)//add by lmk
-{
-    VideoState *is = ffp->is;
-    is->pause_req = pause_on;
-    ffp->auto_resume = !pause_on;
-    stream_update_pause_l(ffp);
-    is->step = 0;
-}
 
 static void toggle_pause(FFPlayer *ffp, int pause_on)
 {
@@ -2286,7 +2286,7 @@ void send_download_req(int index)
 		msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_PLAYER_SEEK, index);
 
 		//_test;
-		 __android_log_print(ANDROID_LOG_ERROR,"lmk test","lmk seek send_download_req index %d", index);
+		 __android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek send_download_req index %d", index);
 		curReqBlockIndex = index;
 	}
 }
@@ -2313,6 +2313,7 @@ static int read_thread(void *arg)
     int64_t prev_io_tick_counter = 0;
     int64_t io_tick_counter = 0;
     int64_t one_second_timestamp = 0;  //add by lmk
+    int64_t keyframe_time_interval = 0;
     int seek_pause = 0;
     int read_packet_pause = 0;
     memset(st_index, -1, sizeof(st_index));
@@ -2536,6 +2537,17 @@ static int read_thread(void *arg)
         ffp_notify_msg1(ffp, FFP_REQ_START);
         ffp->auto_resume = 0;
     }
+    DOWNLOADBLOCKINFO * download_blockinfo_list = mediafile_downld_module_getblocklistinfo();
+    if(download_blockinfo_list != NULL)
+    {
+    	keyframe_time_interval = (download_blockinfo_list+11)->timeStamp -  (download_blockinfo_list+10)->timeStamp;
+    	keyframe_time_interval = keyframe_time_interval *2;
+        __android_log_print(ANDROID_LOG_WARN,"lmk test","lmk read thread keyframe_time_interval : %llu",keyframe_time_interval);
+    }else
+    {
+    	__android_log_print(ANDROID_LOG_ERROR,"lmk test","lmk read thread keyframe_time_interval erroe");
+    }
+
 
     one_second_timestamp = (1 / AV_TIME_BASE) / av_q2d(ic->streams[AVMEDIA_TYPE_VIDEO]->time_base);;//add by lmk
     for (;;) {
@@ -2569,11 +2581,11 @@ static int read_thread(void *arg)
 
             int64_t timestamp =  (seek_target / AV_TIME_BASE) / av_q2d(ic->streams[AVMEDIA_TYPE_VIDEO]->time_base);
             __android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek req: seek target is %llu, time stamp %llu", seek_target,timestamp);
-            __android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek req: seek target is %llu, time stamp %llu", seek_target,timestamp);
+
             one_second_timestamp = 0;
             if (!isBlockDownload(timestamp + one_second_timestamp)) // FIXME
 			{
-            	__android_log_print(ANDROID_LOG_ERROR,"lmk test","lmk seek is not BlockDownload send_download_req");
+            	__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek is not BlockDownload send_download_req");
 
 				send_download_req(timestamp_2_blockIndex(timestamp + one_second_timestamp));
 				if(ffp->is->pause_req == 0)
@@ -2589,7 +2601,7 @@ static int read_thread(void *arg)
 			}else
 			{
 
-				__android_log_print(ANDROID_LOG_ERROR,"lmk test","lmk seek isBlockDownload send_download_req");
+				__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek isBlockDownload send_download_req");
 				if(seek_pause == 1)
 				{
 					ffp_start_l(ffp);
@@ -2597,7 +2609,7 @@ static int read_thread(void *arg)
 					__android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek to start");
 				}else
 				{
-					__android_log_print(ANDROID_LOG_ERROR,"lmk test","lmk seek to start already download");
+					__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek to start already download");
 
 					send_download_req(timestamp_2_blockIndex(timestamp + one_second_timestamp));
 				}
@@ -2761,12 +2773,13 @@ static int read_thread(void *arg)
 		if (ret >= 0) {
 			if (pkt->stream_index == is->video_stream) {
 
-				if(g_timestamp > 1000)
+				if(pkt->pts > g_timestamp)
 				{
-					if(pkt->pts / g_timestamp > 3)
+					if((pkt->pts - g_timestamp) > keyframe_time_interval)
 					{
-						g_timestamp = pkt->pts;
+
 						__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk av_read_frame pkt->pts is not Normal %llu %llu",g_timestamp, pkt->pts);
+						g_timestamp = pkt->pts;
 					}else
 					{
 						g_timestamp = pkt->pts;

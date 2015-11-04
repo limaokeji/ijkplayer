@@ -218,17 +218,14 @@ bool  RmvbPrase::GetKeyFrameInfo(INDEXRECORD** pIndexRecord)
 		HandleChunk(tagID, size);
 	}
 
-	printf_log(LOG_ERROR ,
-							"rmvb parse",
-							"GetKeyFrameInfo out 1 .",
-							NULL);
+
 
 
 	*pIndexRecord = _pIndexRecord;
 
-	printf_log(LOG_ERROR ,
+	printf_log(LOG_WARN ,
 							"rmvb parse",
-							"GetKeyFrameInfo out 2 . ",
+							"GetKeyFrameInfo success.",
 							NULL);
 
 
