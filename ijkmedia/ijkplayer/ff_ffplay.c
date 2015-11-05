@@ -65,7 +65,7 @@
 #include "ff_ffplay_debug.h"
 #include "ijkmeta.h"
 #include "ijksdl/ijksdl_log.h"
-FILE * plogFile = NULL;
+
 typedef struct DownloadBlockInfo
 {
 	unsigned int smapleId;
@@ -2585,7 +2585,6 @@ static int read_thread(void *arg)
 
             int64_t timestamp =  (seek_target / AV_TIME_BASE) / av_q2d(ic->streams[AVMEDIA_TYPE_VIDEO]->time_base);
             __android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek req: seek target is %llu, time stamp %llu", seek_target,timestamp);
-            fprintf(plogFile,"-------->lmk seek, timestamp is %llu\n",g_timestamp);
             one_second_timestamp = 0;
             if (!isBlockDownload(timestamp + one_second_timestamp)) // FIXME
 			{
@@ -2596,7 +2595,7 @@ static int read_thread(void *arg)
 				{
 					ffp_pause_l(ffp);
 					seek_pause = 1;
-					__android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek to pause");
+					__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek to pause");
 				}
 				SDL_Delay(1000);
 				__android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek to time  is not download, sdl delay 1000 timestamp is %llu + %llu",timestamp , one_second_timestamp);
@@ -2605,15 +2604,14 @@ static int read_thread(void *arg)
 			}else
 			{
 
-				__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek isBlockDownload send_download_req");
 				if(seek_pause == 1)
 				{
 					ffp_start_l(ffp);
 					seek_pause = 0;
-					__android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek to start");
+					__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek to start");
 				}else
 				{
-					__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek to start already download");
+					__android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek to start already download");
 
 					send_download_req(ffp, timestamp_2_blockIndex(timestamp + one_second_timestamp));
 				}
@@ -2754,7 +2752,7 @@ static int read_thread(void *arg)
 			{
 				ffp_pause_l(ffp);
 				read_packet_pause = 1;
-				__android_log_print(ANDROID_LOG_INFO,"lmk test","lmk read packet to pause %llu",g_timestamp);
+				__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk read packet to pause %llu",g_timestamp);
 			}
 			SDL_Delay(2000);
 
@@ -2767,32 +2765,13 @@ static int read_thread(void *arg)
 			{
 				ffp_start_l(ffp);
 				read_packet_pause = 0;
-				__android_log_print(ANDROID_LOG_INFO,"lmk test","lmk read packet to start %llu",g_timestamp);
+				__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk read packet to start %llu",g_timestamp);
 			}
 
 		}
 
         ret = av_read_frame(ic, pkt); // _test
-        if(ret < 0)
-        {
-        	__android_log_print(ANDROID_LOG_WARN,"lmk test","av_read_frame end");
-        	fprintf(plogFile,"lmk av_read_frame file end");
-        	fclose(plogFile);
-        }
 		if (ret >= 0) {
-
-			if(plogFile == NULL)
-			{
-				plogFile = fopen("/sdcard/001/daqindiguo.txt","w+");
-			}
-			if(pkt->stream_index == is->video_stream)
-			{
-				fprintf(plogFile," lmk av_read_frame VIDEO pts is %llu  pos is %llu\n",pkt->pts,pkt->pos);
-			}
-			else
-			{
-				fprintf(plogFile," lmk av_read_frame OTHER pts is %llu  pos is %llu\n",pkt->pts,pkt->pos);
-			}
 			if (pkt->stream_index == is->video_stream) {
 
 

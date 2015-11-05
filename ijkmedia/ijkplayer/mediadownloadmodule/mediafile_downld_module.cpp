@@ -9,6 +9,7 @@
 #include <string.h>
 #define stricmp strcasecmp
 DownldMediaFile * g_downld_mediafile = NULL;
+FILE * g_mediafile_parse_log = NULL;
 int check_media_type(char * suffix_name)
 {
 	char * suffixName = suffix_name;
@@ -174,7 +175,9 @@ bool mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, char
 				   "the media file  type is Not Support.\n",
 				   plog_file);
 	}
-	if(!g_downld_mediafile->Init(mediafile_hash, suffix_name, play_mediefile_path, filesize,plog_file))
+
+	g_mediafile_parse_log = fopen("/sdcard/limao/mediafileparse.log","w+");
+	if(!g_downld_mediafile->Init(mediafile_hash, suffix_name, play_mediefile_path, filesize,g_mediafile_parse_log))
 	{
 		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
@@ -195,6 +198,11 @@ bool mediafile_downld_module_finish()
 	{
 		delete g_downld_mediafile;
 		g_downld_mediafile = NULL;
+	}
+	if(g_mediafile_parse_log!= NULL)
+	{
+		fclose(g_mediafile_parse_log);
+		g_mediafile_parse_log = NULL;
 	}
 }
 

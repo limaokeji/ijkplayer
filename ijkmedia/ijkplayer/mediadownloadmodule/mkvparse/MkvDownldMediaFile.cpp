@@ -1037,7 +1037,7 @@ bool MkvDownldMediaFile::DownloadMdatBlock(int index)
 	if (endOffset <= startOffset)
 	{
 		char buf[200] = {0};
-		sprintf(buf,"DownloadFileFirst download mvk file header data failed. startoffset: %llu, endoffset: %llu",startOffset, endOffset);
+		sprintf(buf,"DownloadFileFirst download mvk file header data failed index %d startoffset: %llu, endoffset: %llu",index,startOffset, endOffset);
 		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 				   "mkv DownloadMdatBlock",
 				   buf,
