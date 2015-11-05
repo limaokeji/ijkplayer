@@ -19,6 +19,8 @@
 #include "../mediadownloadmodule/mediafile_downld_module.h"
 #include "../mediadownloadmodule/mediafile_download_log.h"
 
+static void message_loop_x(ThreadLocalData_t *pData);
+
 static pthread_key_t pthread_key_1;
 
 static void start_routine_new(ThreadLocalData_t *pData)
@@ -32,10 +34,13 @@ static void start_routine_new(ThreadLocalData_t *pData)
 	//pthread_key_create(&pthread_key_1, NULL);
 	pthread_setspecific (pthread_key_1, pData);
 
-	// thread entry function
-	media_file_download_module_thread((void *)pData);
+	LimaoApi_MQ_map_add(pData->playRequestTime, pData->msg_queue);
 
-	//
+	// thread entry function
+	//media_file_download_module_thread((void *)pData);
+	message_loop_x(pData);
+
+	LimaoApi_MQ_map_remove(pData->playRequestTime);
 
 #if 0 // test code
 	for (int i = 0; i < 600; i++)
@@ -84,7 +89,8 @@ static void * thread_start_routine(void *pData)
 	return NULL;
 }
 
-static void message_loop_x(JNIEnv *env)
+//static void message_loop_x(JNIEnv *env)
+static void message_loop_x(ThreadLocalData_t *pData)
 {
 	int block_count;
 	int block_index = 0;
@@ -93,12 +99,14 @@ static void message_loop_x(JNIEnv *env)
 	limao_api_param_4_prepareToPlay_t *param;
 	DOWNLOADBLOCKINFO * pdownload_blockinfo_list = NULL;
 
-	pthread_key_create(&pthread_key_1, NULL);
+	MessageQueue *msg_queue = pData->msg_queue;
+	//pthread_key_create(&pthread_key_1, NULL);
+	ALOGD("LimaoApi: message_loop_x()");
 
 	int quit = 0;
-    while (1) {
-#if 0
-    	if(quit != 0)
+
+    while (1) {    	
+    	if (quit == 1 || pData->playRequestTime != LimaoApi_get_playRequestTime())
     	{
     		printf_log(LOG_INFO,
     			   "ijkplayer media file download medule thread",
@@ -106,10 +114,10 @@ static void message_loop_x(JNIEnv *env)
     			   	NULL);
     		break;
     	}
-#endif
+
         AVMessage msg;
 
-        int retval = msg_queue_get(LimaoApi_get_msg_queue(), &msg, 1);
+        int retval = msg_queue_get(msg_queue, &msg, 1);
         //ALOGD("LimaoApi: message_loop_x(): retval = %d", retval);
         if (retval < 0)
             break;
@@ -125,7 +133,7 @@ static void message_loop_x(JNIEnv *env)
         case LM_MSG_PREPARE_TO_PLAY: // user want to play . begin to download
         	ALOGD("LimaoApi: message_loop_x(): LM_MSG_PREPARE_TO_PLAY");
 
-			msg_queue_flush(LimaoApi_get_msg_queue()); // remove all msg
+			msg_queue_flush(msg_queue); // remove all msg
 
         	param = msg.data;
         	mediafile_hash = param->fileHash;
@@ -208,7 +216,7 @@ static void message_loop_x(JNIEnv *env)
 
 			LimaoApi_download(mediafile_hash, 0, LimaoApi_getFileSize(mediafile_hash)/10); // _test
 
-           	msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_P2P_DOWNLOAD_BLOCK, 3);
+           	msg_queue_put_simple2(msg_queue, LM_MSG_P2P_DOWNLOAD_BLOCK, 3);
             break;
 
         case LM_MSG_P2P_DOWNLOAD_BLOCK:
@@ -229,13 +237,13 @@ static void message_loop_x(JNIEnv *env)
 					   "ijkplayer media file download medule thread",
 					   "mediafile download block failed.\n",
 					   	NULL);
-				msg_queue_put_simple1(LimaoApi_get_msg_queue(), LM_MSG_QUIT_THREAD);
+				msg_queue_put_simple1(msg_queue, LM_MSG_QUIT_THREAD);
 				break;
         	}
 
         	if(block_index<block_count)
         	{
-        		msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_P2P_DOWNLOAD_BLOCK, block_index+1);
+        		msg_queue_put_simple2(msg_queue, LM_MSG_P2P_DOWNLOAD_BLOCK, block_index+1);
 
         	}else if(block_index == block_count)
         	{
@@ -295,11 +303,11 @@ static void message_loop_x(JNIEnv *env)
 					   "mediafile download block failed.\n",
 						NULL);
 			}
-			msg_queue_remove(LimaoApi_get_msg_queue(), LM_MSG_P2P_DOWNLOAD_BLOCK); //delete the download msg
+			msg_queue_remove(msg_queue, LM_MSG_P2P_DOWNLOAD_BLOCK); //delete the download msg
 
 			if(block_index<block_count)
 			{
-				msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_P2P_DOWNLOAD_BLOCK, block_index+1);
+				msg_queue_put_simple2(msg_queue, LM_MSG_P2P_DOWNLOAD_BLOCK, block_index+1);
 			}else if(block_index == block_count)
 			{
 				printf_log(LOG_INFO,
@@ -325,10 +333,74 @@ static void message_loop_x(JNIEnv *env)
 
 }
 
+static void message_loop_M(JNIEnv *env)
+{
+	ALOGD("LimaoApi: message_loop_M()");
+
+	pthread_key_create(&pthread_key_1, NULL);
+
+    while (1) {
+        AVMessage msg;
+
+        int retval = msg_queue_get(LimaoApi_get_msg_queue(), &msg, 1);
+        //ALOGD("LimaoApi: message_loop_x(): retval = %d", retval);
+        if (retval < 0)
+            break;
+
+        // block-get should never return 0
+        assert(retval > 0);
+
+        switch (msg.what) {
+        case FFP_MSG_FLUSH: // 这个是消息队列接收的第一个消息
+            ALOGD("LimaoApi: message_loop_M(): FFP_MSG_FLUSH");
+            break;
+
+        case LM_MSG_PREPARE_TO_PLAY:
+        	ALOGD("LimaoApi: message_loop_M(): LM_MSG_PREPARE_TO_PLAY");
+
+			limao_api_param_4_prepareToPlay_t *param = msg.data;
+
+			ThreadLocalData_t *threadLocalData = (ThreadLocalData_t *) malloc(sizeof(ThreadLocalData_t));
+			strcpy(threadLocalData->fileHash, param->fileHash);
+			strcpy(threadLocalData->filenameExtension, param->filenameExtension);
+			threadLocalData->fileSize = param->fileSize;
+			threadLocalData->playRequestTime = param->playRequestTime;
+
+			ALOGD("param->playRequestTime: %lld", param->playRequestTime);
+
+			threadLocalData->msg_queue = &(threadLocalData->_msg_queue);
+			msg_queue_init(threadLocalData->msg_queue);
+			msg_queue_start(threadLocalData->msg_queue);
+			
+			pthread_t newThread = 0;
+			pthread_create(&newThread, NULL, thread_start_routine, threadLocalData);             
+          
+            // transmit LM_MSG_PREPARE_TO_PLAY msg
+          	limao_api_param_4_prepareToPlay_t *newParam = malloc(sizeof(limao_api_param_4_prepareToPlay_t));
+            
+            strcpy(newParam->fileHash, param->fileHash);
+			strcpy(newParam->filenameExtension, param->filenameExtension);
+
+			msg_queue_put_simple5(threadLocalData->msg_queue, LM_MSG_PREPARE_TO_PLAY, newParam);
+            
+            break;
+
+        default:
+            ALOGD("LimaoApi: message_loop_M(): unknown msg: %d", msg.what);
+            break;
+
+        }
+        
+        //FIXME: 释放内存
+    }
+
+}
+
 void * LimaoApi_get_msg_loop()
 {
 	ALOGD("LimaoApi_get_msg_loop()");
-	void (*f)(JNIEnv *env) = message_loop_x;
+	//void (*f)(JNIEnv *env) = message_loop_x;
+	void (*f)(JNIEnv *env) = message_loop_M;
 	return f;
 }
 

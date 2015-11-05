@@ -431,6 +431,8 @@ typedef struct IJKFF_Pipeline IJKFF_Pipeline;
 typedef struct FFPlayer {
     const AVClass *av_class;
 
+    int64_t playRequestTime; // add by tiangui @ 20151105
+
     /* ffplay context */
     VideoState *is;
 
