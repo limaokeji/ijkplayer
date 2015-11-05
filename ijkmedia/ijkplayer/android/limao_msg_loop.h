@@ -16,8 +16,13 @@ typedef struct {
 	JavaVM *jvm;
 	JNIEnv *env;
 
+    MessageQueue *msg_queue;
+    MessageQueue _msg_queue;
+
 	char fileHash[32 + 4];
 	char filenameExtension[8 + 4];
+	int64_t fileSize;
+	int64_t playRequestTime;
 } ThreadLocalData_t;
 
 void * LimaoApi_get_msg_loop();

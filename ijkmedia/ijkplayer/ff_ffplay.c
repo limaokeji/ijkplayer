@@ -2271,21 +2271,26 @@ static int is_realtime(AVFormatContext *s)
 int isBlockDownload(uint64_t timestamp);
 
 uint64_t g_timestamp = 0;
-void send_download_req(int index)
+
+
+void send_download_req(FFPlayer *ffp, int index)
 {
 	static int curReqBlockIndex = -1;
 
 	if (index != curReqBlockIndex)
 	{
-/*		if(index >= 1)  // add by lmk
-		{
-			index = index -1;
-		}*/
 
-		msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_PLAYER_SEEK, index);
+		MessageQueue *msg_queue = LimaoApi_MQ_map_get(ffp->playRequestTime);
+		if (msg_queue == NULL) {
+			__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek send_download_req: msg_queue == NULL");
+			return;
+		}
+
+		//msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_PLAYER_SEEK, index);
+		msg_queue_put_simple2(msg_queue, LM_MSG_PLAYER_SEEK, index);
 
 		//_test;
-		 __android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek send_download_req index %d", index);
+		__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek send_download_req index %d", index);
 		curReqBlockIndex = index;
 	}
 }
@@ -2586,7 +2591,7 @@ static int read_thread(void *arg)
 			{
             	__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek is not BlockDownload send_download_req");
 
-				send_download_req(timestamp_2_blockIndex(timestamp + one_second_timestamp));
+				send_download_req(ffp, timestamp_2_blockIndex(timestamp + one_second_timestamp));
 				if(ffp->is->pause_req == 0)
 				{
 					ffp_pause_l(ffp);
@@ -2610,7 +2615,7 @@ static int read_thread(void *arg)
 				{
 					__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek to start already download");
 
-					send_download_req(timestamp_2_blockIndex(timestamp + one_second_timestamp));
+					send_download_req(ffp, timestamp_2_blockIndex(timestamp + one_second_timestamp));
 				}
 			}
 // FIXME the +-2 is due to rounding being not done in the correct direction in generation

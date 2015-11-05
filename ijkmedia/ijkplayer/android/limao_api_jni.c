@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <pthread.h>
 #include <jni.h>
 
 #include "limao_api_jni.h"
@@ -30,6 +31,10 @@ typedef struct limao_api_fields_t {
 	jmethodID jmid_c2j_isDownload;
 	jmethodID jmid_c2j_getFilePath;
 	jmethodID jmid_c2j_getFileSize;
+
+	jmethodID jmid_c2j_MQ_map_add;
+	jmethodID jmid_c2j_MQ_map_remove;
+	jmethodID jmid_c2j_MQ_map_get;
 
 } limao_api_fields_t;
 
@@ -59,9 +64,13 @@ static JavaVM *g_jvm;
 
 static JNIEnv *g_env;
 
-static int g_env_flag = 1; // is use g_env
+static int g_env_flag = 0; // is use g_env
 
 static int64_t g_startTime = 0; // ms
+
+static int64_t g_playRequestTime = 0; // ms
+
+static pthread_mutex_t g_mutex_4_time = PTHREAD_MUTEX_INITIALIZER;
 
 static limao_api_fields_t g_clazz;
 
@@ -78,10 +87,12 @@ static void LimaoApi_postMsgToUI(int msgID, int arg1, int arg2, char *str)
 }
 #endif
 
-static void LimaoApi_prepareToPlay(JNIEnv *env, jclass clazz, jstring fileHash, jstring filenameExtension, jlong fileSize, jlong startTime)
+static void LimaoApi_prepareToPlay(JNIEnv *env, jclass clazz, jstring fileHash, jstring filenameExtension, jlong fileSize, jlong startTime, jlong curTime)
 {
 	limao_api_param_4_prepareToPlay_t *param = malloc(sizeof(limao_api_param_4_prepareToPlay_t));
 	// FIXME -- malloc --null
+
+	LimaoApi_set_playRequestTime(curTime);
 
 	const char *c_fileHash = (*env)->GetStringUTFChars(env, fileHash, NULL);
 	const char *c_filenameExtension = (*env)->GetStringUTFChars(env, filenameExtension, NULL);
@@ -90,9 +101,10 @@ static void LimaoApi_prepareToPlay(JNIEnv *env, jclass clazz, jstring fileHash, 
 	strcpy(param->fileHash, c_fileHash);
 	strcpy(param->filenameExtension, c_filenameExtension);
 	param->fileSize = fileSize;
+	param->playRequestTime = curTime;
 
 	g_startTime = startTime;
-	
+		
 	(*env)->ReleaseStringUTFChars(env, fileHash, c_fileHash);
 	(*env)->ReleaseStringUTFChars(env, filenameExtension, c_filenameExtension);	
 
@@ -111,7 +123,7 @@ void LimaoApi_prepareOK(char *fileHash)
 	} else {
 		pthread_key_t key = LimaoApi_get_pthread_key();
 		ThreadLocalData_t *tld = pthread_getspecific(key);
-		JNIEnv *env = tld->env;
+		env = tld->env;
 	}
 
 	jstring str = (*env)->NewStringUTF(env, fileHash);
@@ -133,7 +145,7 @@ void LimaoApi_bufferingUpdate(char *fileHash, int percent)
 	} else {
 		pthread_key_t key = LimaoApi_get_pthread_key();
 		ThreadLocalData_t *tld = pthread_getspecific(key);
-		JNIEnv *env = tld->env;
+		env = tld->env;
 	}
 
 	jstring str = (*env)->NewStringUTF(env, fileHash);
@@ -157,7 +169,7 @@ int LimaoApi_download(char *fileHash, int64_t offset, int64_t size)
 	} else {
 		pthread_key_t key = LimaoApi_get_pthread_key();
 		ThreadLocalData_t *tld = pthread_getspecific(key);
-		JNIEnv *env = tld->env;
+		env = tld->env;
 	}
 
 	jstring str = (*env)->NewStringUTF(env, fileHash);
@@ -165,7 +177,7 @@ int LimaoApi_download(char *fileHash, int64_t offset, int64_t size)
 	jlong tmp_offset = offset;
 	jlong tmp_size = size;
 	//(*env)->CallStaticVoidMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_download, str, offset, size);
-	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_download, str, offset, size);
+	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_download, str, tmp_offset, tmp_size);
 	
 	(*env)->DeleteLocalRef(env, str);
 	
@@ -186,7 +198,7 @@ int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeo
 	} else {
 		pthread_key_t key = LimaoApi_get_pthread_key();
 		ThreadLocalData_t *tld = pthread_getspecific(key);
-		JNIEnv *env = tld->env;
+		env = tld->env;
 	}
 
 	jstring str = (*env)->NewStringUTF(env, fileHash);
@@ -213,7 +225,7 @@ int LimaoApi_isDownload(char *fileHash, int64_t offset, int64_t size)
 	} else {
 		pthread_key_t key = LimaoApi_get_pthread_key();
 		ThreadLocalData_t *tld = pthread_getspecific(key);
-		JNIEnv *env = tld->env;
+		env = tld->env;
 	}
 
 	jstring str = (*env)->NewStringUTF(env, fileHash);
@@ -237,7 +249,7 @@ void LimaoApi_getFilePath(/*IN*/char *fileHash, /*OUT*/char *filePath)
 	} else {
 		pthread_key_t key = LimaoApi_get_pthread_key();
 		ThreadLocalData_t *tld = pthread_getspecific(key);
-		JNIEnv *env = tld->env;
+		env = tld->env;
 	}
 
 	jstring strHash = (*env)->NewStringUTF(env, fileHash);
@@ -268,7 +280,7 @@ int64_t LimaoApi_getFileSize(char *fileHash)
 	} else {
 		pthread_key_t key = LimaoApi_get_pthread_key();
 		ThreadLocalData_t *tld = pthread_getspecific(key);
-		JNIEnv *env = tld->env;
+		env = tld->env;
 	}
 
 	jstring strHash = (*env)->NewStringUTF(env, fileHash);
@@ -442,7 +454,7 @@ static JNINativeMethod g_methods[] = {
     { "_native_init",            "()V",        (void *) LimaoApi_native_init },
     { "_native_deinit",         "()V",        (void *) LimaoApi_native_deinit },
 
-    { "_prepareToPlay",       "(Ljava/lang/String;Ljava/lang/String;JJ)V",     (void *) LimaoApi_prepareToPlay },
+    { "_prepareToPlay",       "(Ljava/lang/String;Ljava/lang/String;JJJ)V",     (void *) LimaoApi_prepareToPlay },
     { "_downloadFinish",      "(Ljava/lang/String;I)V",                               (void *) LimaoApi_downloadFinish }
 
 };
@@ -480,6 +492,15 @@ int LimaoApi_global_init(JavaVM *jvm, JNIEnv *env)
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_getFileSize, g_clazz.clazz,
         "c2j_getFileSize", "(Ljava/lang/String;)J");
 
+    IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_MQ_map_add, g_clazz.clazz,
+        "c2j_MQ_map_add", "(JJ)V");
+
+    IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_MQ_map_remove, g_clazz.clazz,
+        "c2j_MQ_map_remove", "(J)V");
+
+    IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_MQ_map_get, g_clazz.clazz,
+        "c2j_MQ_map_get", "(J)J");
+
     return ret;
 }
 
@@ -495,8 +516,56 @@ MessageQueue * LimaoApi_get_msg_queue()
 
 int64_t LimaoApi_get_start_time()
 {
-	ALOGE("LimaoApi_get_start_time(): %lld", g_startTime);
+	ALOGD("LimaoApi_get_start_time(): %lld", g_startTime);
 	return g_startTime;
+}
+
+int64_t LimaoApi_get_playRequestTime()
+{
+	ALOGD("LimaoApi_get_playRequestTime(): %lld", g_playRequestTime);
+
+	pthread_mutex_lock(&g_mutex_4_time);
+	int64_t ret = g_playRequestTime;
+	pthread_mutex_unlock(&g_mutex_4_time);
+
+	return ret;
+}
+
+void LimaoApi_set_playRequestTime(int64_t time)
+{
+	pthread_mutex_lock(&g_mutex_4_time);
+	g_playRequestTime = time;
+	pthread_mutex_unlock(&g_mutex_4_time);
+
+	ALOGD("LimaoApi_set_playRequestTime(): %lld", g_playRequestTime);
+}
+
+void LimaoApi_MQ_map_add(int64_t time, void *ptr)
+{
+	ALOGD("LimaoApi_MQ_map_add(): time | ptr = %lld %p", time, ptr);
+	jlong tmp_ptr = (jlong) ptr;
+	(*g_env)->CallStaticIntMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_add, time, tmp_ptr);
+}
+
+void LimaoApi_MQ_map_remove(int64_t time)
+{
+	ALOGD("LimaoApi_MQ_map_remove(): time = %lld", time);
+	(*g_env)->CallStaticIntMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_remove, time);
+}
+
+void * LimaoApi_MQ_map_get(int64_t time)
+{
+	void *ptr;
+
+	jlong ret = (*g_env)->CallStaticIntMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_get, time);
+	if (ret == 0)
+		ptr = NULL;
+	else
+		ptr = (void *)ret;
+
+	ALOGD("LimaoApi_MQ_map_get(): time | ptr = %lld %p", time, ptr);
+	
+	return ptr;
 }
 
 // JNI_OnLoad()

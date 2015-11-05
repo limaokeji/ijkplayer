@@ -41,6 +41,7 @@ typedef struct {
 	char fileHash[32 + 4];
 	char filenameExtension[8 + 4];
 	int64_t fileSize;
+	int64_t playRequestTime;
 } limao_api_param_4_prepareToPlay_t;
 
 typedef struct {
@@ -56,6 +57,10 @@ JavaVM * LimaoApi_get_JVM();
 MessageQueue * LimaoApi_get_msg_queue();
 
 int64_t LimaoApi_get_start_time();
+
+int64_t LimaoApi_get_playRequestTime();
+
+void LimaoApi_set_playRequestTime(int64_t time);
 
 void LimaoApi_prepareOK(char *fileHash);
 
@@ -73,6 +78,12 @@ int LimaoApi_isDownload(char *fileHash, int64_t offset, int64_t size);
 void LimaoApi_getFilePath(/*IN*/char *fileHash, /*OUT*/char *filePath);
 
 int64_t LimaoApi_getFileSize(char *fileHash);
+
+void LimaoApi_MQ_map_add(int64_t time, void *ptr);
+
+void LimaoApi_MQ_map_remove(int64_t time);
+
+void * LimaoApi_MQ_map_get(int64_t time);
 
 #ifdef __cplusplus
 }

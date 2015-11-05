@@ -269,7 +269,7 @@ IjkMediaPlayer_release(JNIEnv *env, jobject thiz)
     ijkmp_dec_ref_p(&mp);
 }
 
-static void IjkMediaPlayer_native_setup(JNIEnv *env, jobject thiz, jobject weak_this);
+static void IjkMediaPlayer_native_setup(JNIEnv *env, jobject thiz, jobject weak_this, jlong playRequestTime);
 
 static void
 IjkMediaPlayer_reset(JNIEnv *env, jobject thiz)
@@ -282,7 +282,7 @@ IjkMediaPlayer_reset(JNIEnv *env, jobject thiz)
     jobject weak_thiz = (jobject) ijkmp_set_weak_thiz(mp, NULL );
 
     IjkMediaPlayer_release(env, thiz);
-    IjkMediaPlayer_native_setup(env, thiz, weak_thiz);
+    IjkMediaPlayer_native_setup(env, thiz, weak_thiz, 0);
 
     ijkmp_dec_ref_p(&mp);
 }
@@ -514,12 +514,13 @@ IjkMediaPlayer_native_init(JNIEnv *env)
 }
 
 static void
-IjkMediaPlayer_native_setup(JNIEnv *env, jobject thiz, jobject weak_this)
+IjkMediaPlayer_native_setup(JNIEnv *env, jobject thiz, jobject weak_this, jlong playRequestTime)
 {
     MPTRACE("%s\n", __func__);
     IjkMediaPlayer *mp = ijkmp_android_create(message_loop);
     JNI_CHECK_GOTO(mp, env, "java/lang/OutOfMemoryError", "mpjni: native_setup: ijkmp_create() failed", LABEL_RETURN);
 
+    mp->ffplayer->playRequestTime = playRequestTime; // add by tiangui @ 20151105
     //mp->ffplayer->start_time = LimaoApi_get_start_time(); // add by tiangui @ 20151103
 
     jni_set_media_player(env, thiz, mp);
@@ -854,7 +855,7 @@ static JNINativeMethod g_methods[] = {
     { "_reset",                 "()V",      (void *) IjkMediaPlayer_reset },
     { "setVolume",              "(FF)V",    (void *) IjkMediaPlayer_setVolume },
     { "native_init",            "()V",      (void *) IjkMediaPlayer_native_init },
-    { "native_setup",           "(Ljava/lang/Object;)V", (void *) IjkMediaPlayer_native_setup },
+    { "native_setup",           "(Ljava/lang/Object;J)V", (void *) IjkMediaPlayer_native_setup },
     { "native_finalize",        "()V",      (void *) IjkMediaPlayer_native_finalize },
 
     { "_setOption",             "(ILjava/lang/String;Ljava/lang/String;)V", (void *) IjkMediaPlayer_setOption },
