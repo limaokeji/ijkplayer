@@ -65,7 +65,7 @@
 #include "ff_ffplay_debug.h"
 #include "ijkmeta.h"
 #include "ijksdl/ijksdl_log.h"
-
+FILE * plogFile = NULL;
 typedef struct DownloadBlockInfo
 {
 	unsigned int smapleId;
@@ -2271,7 +2271,6 @@ static int is_realtime(AVFormatContext *s)
 int isBlockDownload(uint64_t timestamp);
 
 uint64_t g_timestamp = 0;
-
 void send_download_req(int index)
 {
 	static int curReqBlockIndex = -1;
@@ -2581,7 +2580,7 @@ static int read_thread(void *arg)
 
             int64_t timestamp =  (seek_target / AV_TIME_BASE) / av_q2d(ic->streams[AVMEDIA_TYPE_VIDEO]->time_base);
             __android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek req: seek target is %llu, time stamp %llu", seek_target,timestamp);
-
+            fprintf(plogFile,"-------->lmk seek, timestamp is %llu\n",g_timestamp);
             one_second_timestamp = 0;
             if (!isBlockDownload(timestamp + one_second_timestamp)) // FIXME
 			{
@@ -2769,17 +2768,38 @@ static int read_thread(void *arg)
 		}
 
         ret = av_read_frame(ic, pkt); // _test
-
+        if(ret < 0)
+        {
+        	__android_log_print(ANDROID_LOG_WARN,"lmk test","av_read_frame end");
+        	fprintf(plogFile,"lmk av_read_frame file end");
+        	fclose(plogFile);
+        }
 		if (ret >= 0) {
+
+			if(plogFile == NULL)
+			{
+				plogFile = fopen("/sdcard/001/daqindiguo.txt","w+");
+			}
+			if(pkt->stream_index == is->video_stream)
+			{
+				fprintf(plogFile," lmk av_read_frame VIDEO pts is %llu  pos is %llu\n",pkt->pts,pkt->pos);
+			}
+			else
+			{
+				fprintf(plogFile," lmk av_read_frame OTHER pts is %llu  pos is %llu\n",pkt->pts,pkt->pos);
+			}
 			if (pkt->stream_index == is->video_stream) {
+
+
 
 				if(pkt->pts > g_timestamp)
 				{
 					if((pkt->pts - g_timestamp) > keyframe_time_interval)
 					{
 
-						__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk av_read_frame pkt->pts is not Normal %llu %llu",g_timestamp, pkt->pts);
+						__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk av_read_frame pkt->pts is not Normal g_timestamp  %llu pkt->pts %llu ",g_timestamp, pkt->pts);
 						g_timestamp = pkt->pts;
+
 					}else
 					{
 						g_timestamp = pkt->pts;

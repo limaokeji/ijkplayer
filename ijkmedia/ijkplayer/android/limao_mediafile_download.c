@@ -222,8 +222,13 @@ int isBlockDownload(uint64_t timestamp)
 	{
 		return  1;
 	}
+
 	for (int i = 0; i < download_block_count - 1; i++)
 	{
+		if(i >= download_block_count -5)
+		{
+			return 1;
+		}
 		if (( timestamp >= download_blockinfo_list[i].timeStamp) && (timestamp < download_blockinfo_list[i+1].timeStamp ))
 		{
 			char buf[200] = {0};
@@ -233,7 +238,8 @@ int isBlockDownload(uint64_t timestamp)
 						   "ijkplayer isBlockDownload ",
 						   buf,
 						   	NULL);
-			return download_blockinfo_list[i].isDownload;
+
+			return download_blockinfo_list[i].isDownload && download_blockinfo_list[i+1].isDownload && download_blockinfo_list[i+2].isDownload;
 		}
 	}
 	return 0;
