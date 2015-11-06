@@ -66,6 +66,8 @@
 #include "ijkmeta.h"
 #include "ijksdl/ijksdl_log.h"
 
+
+#define  ffp_toggle_buffering  limao_player_pause_start
 typedef struct DownloadBlockInfo
 {
 	unsigned int smapleId;
@@ -2294,7 +2296,8 @@ void send_download_req(FFPlayer *ffp, int index)
 		curReqBlockIndex = index;
 	}
 }
-
+int is_log_time_stamp = 1;
+FILE * pTimeStampFileLog = NULL;
 /* this thread gets the stream from the disk or the network */
 static int read_thread(void *arg)
 {
@@ -2593,7 +2596,7 @@ static int read_thread(void *arg)
 				send_download_req(ffp, timestamp_2_blockIndex(timestamp + one_second_timestamp));
 				if(ffp->is->pause_req == 0)
 				{
-					ffp_pause_l(ffp);
+					limao_player_pause_start(ffp, 1);   //pause
 					seek_pause = 1;
 					__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek to pause");
 				}
@@ -2606,7 +2609,7 @@ static int read_thread(void *arg)
 
 				if(seek_pause == 1)
 				{
-					ffp_start_l(ffp);
+					limao_player_pause_start(ffp, 0);   // start
 					seek_pause = 0;
 					__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek to start");
 				}else
@@ -2750,7 +2753,7 @@ static int read_thread(void *arg)
 			av_log(ffp, AV_LOG_ERROR, "read_thread(): av_read_frame(): ret = -112233\n");
 			if(ffp->is->pause_req == 0)
 			{
-				ffp_pause_l(ffp);
+				limao_player_pause_start(ffp, 1);   // pause
 				read_packet_pause = 1;
 				__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk read packet to pause %llu",g_timestamp);
 			}
@@ -2763,7 +2766,7 @@ static int read_thread(void *arg)
 
 			if(read_packet_pause == 1)
 			{
-				ffp_start_l(ffp);
+				limao_player_pause_start(ffp, 0);   // start
 				read_packet_pause = 0;
 				__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk read packet to start %llu",g_timestamp);
 			}
@@ -2797,6 +2800,24 @@ static int read_thread(void *arg)
 			}
 		}
 
+        if(is_log_time_stamp)
+        {
+        	if(pTimeStampFileLog == NULL)
+        	{
+        		pTimeStampFileLog =fopen("/sdcard/limao/timeStampLog.txt","w+");
+        	}
+
+        	if(pTimeStampFileLog != NULL)
+        	{
+        		if(pkt->stream_index == is->video_stream)
+        		{
+        			fprintf(pTimeStampFileLog,"av_read_frame VIDEO pts %llu,pos %llu\n",pkt->pts,pkt->pos);
+        		}else
+        		{
+        			fprintf(pTimeStampFileLog,"------------>av_read_frame OTHER pts %llu,pos %llu\n",pkt->pts,pkt->pos);
+        		}
+        	}
+        }
         if (ret < 0) {
             if ((ret == AVERROR_EOF || avio_feof(ic->pb)) && !is->eof) {
                 if (is->video_stream >= 0)

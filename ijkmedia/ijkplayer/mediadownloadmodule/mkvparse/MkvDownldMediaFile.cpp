@@ -1073,6 +1073,7 @@ bool MkvDownldMediaFile::DownloadMdatBlock(int index)
 				   "mkv DownloadMdatBlock",
 				   buf,
 				   	pMediaFileDownldLog);
+		_downloadBlockInfoList[index].isDownload = true;
 		return true;
 	}
 	long size = endOffset - startOffset;
