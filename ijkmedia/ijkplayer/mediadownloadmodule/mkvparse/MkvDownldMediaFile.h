@@ -8,7 +8,8 @@
 #define  TRACK			 0x1654AE6B
 #define  CLUSTER		 0x1F43B675
 #define  CUES            0x1C53BB6B 
-			      
+
+#define FEYFRAMELOG 1
 class MkvDownldMediaFile :public DownldMediaFile
 {
 private:
@@ -60,6 +61,9 @@ private:
 	unsigned int MkvCheckBoxType(unsigned char* blockId);
 	bool PraseSeekInfoBlock(long offset,int64_t size, unsigned int& ID, int64_t& blockSize);
 
+#ifdef FEYFRAMELOG
+	FILE * pkeyframeLog;
+#endif
 public:
 	MkvDownldMediaFile();
 	~MkvDownldMediaFile();

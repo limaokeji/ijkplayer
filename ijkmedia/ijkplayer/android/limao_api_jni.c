@@ -544,20 +544,20 @@ void LimaoApi_MQ_map_add(int64_t time, void *ptr)
 {
 	ALOGD("LimaoApi_MQ_map_add(): time | ptr = %lld %p", time, ptr);
 	jlong tmp_ptr = (jlong) ptr;
-	(*g_env)->CallStaticIntMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_add, time, tmp_ptr);
+	(*g_env)->CallStaticVoidMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_add, time, tmp_ptr);
 }
 
 void LimaoApi_MQ_map_remove(int64_t time)
 {
 	ALOGD("LimaoApi_MQ_map_remove(): time = %lld", time);
-	(*g_env)->CallStaticIntMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_remove, time);
+	(*g_env)->CallStaticVoidMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_remove, time);
 }
 
 void * LimaoApi_MQ_map_get(int64_t time)
 {
 	void *ptr;
 
-	jlong ret = (*g_env)->CallStaticIntMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_get, time);
+	jlong ret = (*g_env)->CallStaticLongMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_get, time);
 	if (ret == 0)
 		ptr = NULL;
 	else

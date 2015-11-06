@@ -176,7 +176,7 @@ bool mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, char
 				   plog_file);
 	}
 
-	g_mediafile_parse_log = fopen("/sdcard/limao/mediafileparse.log","w+");
+	g_mediafile_parse_log = fopen("/sdcard/limao/MediaFileParse.txt","w+");
 	if(!g_downld_mediafile->Init(mediafile_hash, suffix_name, play_mediefile_path, filesize,g_mediafile_parse_log))
 	{
 		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,

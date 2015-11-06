@@ -42,6 +42,11 @@ MkvDownldMediaFile::MkvDownldMediaFile()
 	_syncSampleCount = 0;
 	_downloadBlockInfoList = (DOWNLOADBLOCKINFO *)malloc(sizeof(DOWNLOADBLOCKINFO)* 101);
 	memset(_downloadBlockInfoList, 0, sizeof(DOWNLOADBLOCKINFO)* 101);
+
+
+#ifdef FEYFRAMELOG
+	pkeyframeLog = fopen("/sdcard/limao/MKV_KeyFrame.txt","w+");
+#endif
 }
 MkvDownldMediaFile::~MkvDownldMediaFile()
 {
@@ -50,6 +55,10 @@ MkvDownldMediaFile::~MkvDownldMediaFile()
 		free(_downloadBlockInfoList);
 		_downloadBlockInfoList = NULL;
 	}
+#ifdef FEYFRAMELOG
+	if(pkeyframeLog != NULL)
+		fclose(pkeyframeLog);
+#endif
 }
 bool MkvDownldMediaFile::PraseSeekInfoBlock(long offset, int64_t size, unsigned int& ID, int64_t& blockSize)
 {
@@ -270,7 +279,14 @@ bool MkvDownldMediaFile::PraseCueTrackPosition(unsigned char * buffer, int len)
 
 			int64_t CueClusterPosition = GetBlockSize(buffer + index + idLen + blockSizeBufLen, blockSize);
 
+			#ifdef FEYFRAMELOG
+			if(pkeyframeLog != NULL)
+			{
+				fprintf(pkeyframeLog,", offset %llu .\n",CueClusterPosition);
+			}
+			#endif
 			_downloadBlockInfoList[_syncSampleCount].offset = CueClusterPosition;
+
 		}
 		else if (buffer[index] == 0xF0)//CueRelativePosition
 		{
@@ -394,6 +410,13 @@ bool MkvDownldMediaFile::PraseCuePoint(unsigned char * buffer,int len)
 		_downloadBlockInfoList[_syncSampleCount].timeStamp = timestamp;
 		_downloadBlockInfoList[_syncSampleCount].isDownload = false;
 		_downloadBlockInfoList[_syncSampleCount].smapleId = _syncSampleCount;
+
+#ifdef FEYFRAMELOG
+	if(pkeyframeLog != NULL)
+	{
+		fprintf(pkeyframeLog,"key frame info timestamp  %llu , sample id %d",timestamp , _syncSampleCount );
+	}
+#endif
 		if ((_syncSampleCount % 100 == 0) && (_syncSampleCount >=100))
 		{
 			_downloadBlockInfoList = (DOWNLOADBLOCKINFO*)realloc(_downloadBlockInfoList, sizeof(DOWNLOADBLOCKINFO)* (_syncSampleCount + 102));
@@ -546,6 +569,14 @@ bool MkvDownldMediaFile::GetDownloadOffset(long blockOffset, int64_t blockSize)
 	}
 	delete[] buffer;
 	_syncSampleCount--;
+
+	#ifdef FEYFRAMELOG
+	if(pkeyframeLog != NULL)
+	{
+		fclose(pkeyframeLog);
+		pkeyframeLog = NULL;
+	}
+	#endif
 	return true;
 
 }
@@ -1037,12 +1068,12 @@ bool MkvDownldMediaFile::DownloadMdatBlock(int index)
 	if (endOffset <= startOffset)
 	{
 		char buf[200] = {0};
-		sprintf(buf,"DownloadFileFirst download mvk file header data failed index %d startoffset: %llu, endoffset: %llu",index,startOffset, endOffset);
-		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+		sprintf(buf,"DownloadFileFirst download mvk file header data failed index %d startoffset: %lu, endoffset: %lu",index,startOffset, endOffset);
+		printf_log(pMediaFileDownldLog == NULL ? LOG_WARN : LOG_WARN|LOG_FILE,
 				   "mkv DownloadMdatBlock",
 				   buf,
 				   	pMediaFileDownldLog);
-		return false;
+		return true;
 	}
 	long size = endOffset - startOffset;
 	if(0 != P2pDownloadMediaData(startOffset, size))
