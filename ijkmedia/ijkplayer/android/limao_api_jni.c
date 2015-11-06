@@ -542,26 +542,54 @@ void LimaoApi_set_playRequestTime(int64_t time)
 
 void LimaoApi_MQ_map_add(int64_t time, void *ptr)
 {
+	JNIEnv *env = NULL;
+
+	if (g_env_flag == 1)
+	{
+		env = g_env;
+	} else {
+		pthread_key_t key = LimaoApi_get_pthread_key();
+		ThreadLocalData_t *tld = pthread_getspecific(key);
+		env = tld->env;
+	}
+
 	ALOGD("LimaoApi_MQ_map_add(): time | ptr = %lld %p", time, ptr);
 	jlong tmp_ptr = (jlong) ptr;
-	(*g_env)->CallStaticVoidMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_add, time, tmp_ptr);
+	(*env)->CallStaticVoidMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_add, time, tmp_ptr);
 }
 
 void LimaoApi_MQ_map_remove(int64_t time)
 {
+	JNIEnv *env = NULL;
+
+	if (g_env_flag == 1)
+	{
+		env = g_env;
+	} else {
+		pthread_key_t key = LimaoApi_get_pthread_key();
+		ThreadLocalData_t *tld = pthread_getspecific(key);
+		env = tld->env;
+	}
+
 	ALOGD("LimaoApi_MQ_map_remove(): time = %lld", time);
-	(*g_env)->CallStaticVoidMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_remove, time);
+	(*env)->CallStaticVoidMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_remove, time);
 }
 
 void * LimaoApi_MQ_map_get(int64_t time)
 {
+	JNIEnv *env = NULL;
+
 	void *ptr;
 
-	jlong ret = (*g_env)->CallStaticLongMethod(g_env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_get, time);
+    (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+	jlong ret = (*env)->CallStaticLongMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_MQ_map_get, time);
 	if (ret == 0)
 		ptr = NULL;
 	else
 		ptr = (void *)ret;
+
+	(*g_jvm)->DetachCurrentThread(g_jvm);
 
 	ALOGD("LimaoApi_MQ_map_get(): time | ptr = %lld %p", time, ptr);
 	
