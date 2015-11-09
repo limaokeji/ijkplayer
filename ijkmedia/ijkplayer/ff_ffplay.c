@@ -2331,6 +2331,10 @@ static int read_thread(void *arg)
 #endif
     is->eof = 0;
 
+	//char _testBuf[100];
+	//sprintf(_testBuf, "isLimaoPlayMode = %d", ffp->isLimaoPlayMode);
+	//__android_log_print(ANDROID_LOG_DEBUG, "AAA: lmk test", _testBuf);
+
     ic = avformat_alloc_context();
     if (!ic) {
         av_log(NULL, AV_LOG_FATAL, "Could not allocate context.\n");
