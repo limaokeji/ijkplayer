@@ -31,6 +31,8 @@ typedef struct limao_api_fields_t {
 	jmethodID jmid_c2j_isDownload;
 	jmethodID jmid_c2j_getFilePath;
 	jmethodID jmid_c2j_getFileSize;
+	jmethodID jmid_c2j_hasEnoughMemory;
+	jmethodID jmid_c2j_notifyNotEnoughMemory;
 
 	jmethodID jmid_c2j_MQ_map_add;
 	jmethodID jmid_c2j_MQ_map_remove;
@@ -255,7 +257,7 @@ void LimaoApi_getFilePath(/*IN*/char *fileHash, /*OUT*/char *filePath)
 
 	jstring strPath = (*env)->CallStaticObjectMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_getFilePath, strHash);
 
-	const char * c_filePath = (*env)->GetStringUTFChars(env, strPath, NULL);
+	const char * c_filePath = (*env)->GetStringUTFChars(env, strPath, NULL); // _xxx
 
 	memset(filePath, 0, 4);
 	strcpy(filePath, c_filePath);
@@ -306,6 +308,48 @@ static void LimaoApi_downloadFinish(JNIEnv *env, jclass clazz, jstring fileHash,
 	(*env)->ReleaseStringUTFChars(env, fileHash, c_fileHash);
 
 	msg_queue_put_simple5(p_limaoJniStruct->msg_queue, LM_MSG_DOWNLOAD_RSP, param);
+}
+
+int LimaoApi_hasEnoughMemory(int64_t fileSize)
+{
+	int ret = 0;
+
+	JNIEnv *env = NULL;
+
+	if (g_env_flag == 1)
+	{
+		env = g_env;
+	} else {
+		pthread_key_t key = LimaoApi_get_pthread_key();
+		ThreadLocalData_t *tld = pthread_getspecific(key);
+		env = tld->env;
+	}
+
+	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_hasEnoughMemory, fileSize);
+
+	return ret;
+}
+
+void LimaoApi_notifyNotEnoughMemory(char *fileHash, int64_t fileSize)
+{
+	//int ret = 0;
+
+	JNIEnv *env = NULL;
+
+	if (g_env_flag == 1)
+	{
+		env = g_env;
+	} else {
+		pthread_key_t key = LimaoApi_get_pthread_key();
+		ThreadLocalData_t *tld = pthread_getspecific(key);
+		env = tld->env;
+	}
+
+	jstring str = (*env)->NewStringUTF(env, fileHash);
+
+	(*env)->CallStaticVoidMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_notifyNotEnoughMemory, str, fileSize);
+
+	(*env)->DeleteLocalRef(env, str);
 }
 
 #if 0
@@ -478,6 +522,12 @@ int LimaoApi_global_init(JavaVM *jvm, JNIEnv *env)
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_getFileSize, g_clazz.clazz,
         "c2j_getFileSize", "(Ljava/lang/String;)J");
+
+    IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_hasEnoughMemory, g_clazz.clazz,
+        "c2j_hasEnoughMemory", "(J)I");
+
+    IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_notifyNotEnoughMemory, g_clazz.clazz,
+        "c2j_notifyNotEnoughMemory", "(Ljava/lang/String;J)V");
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_MQ_map_add, g_clazz.clazz,
         "c2j_MQ_map_add", "(JJ)V");

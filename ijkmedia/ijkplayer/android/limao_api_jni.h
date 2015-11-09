@@ -79,6 +79,17 @@ void LimaoApi_getFilePath(/*IN*/char *fileHash, /*OUT*/char *filePath);
 
 int64_t LimaoApi_getFileSize(char *fileHash);
 
+/*
+ * return: 1-yes, 0-no
+ */
+int LimaoApi_hasEnoughMemory(int64_t fileSize);
+
+void LimaoApi_notifyNotEnoughMemory(char *fileHash, int64_t fileSize);
+
+/* 
+ * MQ_map
+ */
+
 void LimaoApi_MQ_map_add(int64_t time, void *ptr);
 
 void LimaoApi_MQ_map_remove(int64_t time);
