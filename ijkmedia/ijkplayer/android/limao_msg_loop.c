@@ -94,6 +94,7 @@ static void message_loop_x(ThreadLocalData_t *pData)
 {
 	int block_count;
 	int block_index = 0;
+	int64_t fileSize;
 	char * mediafile_hash;
 	char * suffix_name;
 	limao_api_param_4_prepareToPlay_t *param;
@@ -163,6 +164,18 @@ static void message_loop_x(ThreadLocalData_t *pData)
         				   "ijkplayer media file download medule thread ",
         				   "mediafile_downld_module_init ok",
         				   	NULL);
+        				   	
+            fileSize = LimaoApi_getFileSize(mediafile_hash);
+			if (LimaoApi_hasEnoughMemory(fileSize) == 0)
+			{
+				printf_log(LOG_ERROR,
+        			   "ijkplayer media file download medule thread",
+        			   "Not has enough memory.\n",
+        			   	NULL);
+        		LimaoApi_notifyNotEnoughMemory(mediafile_hash, fileSize);
+        		break;
+			}
+
   			LimaoApi_bufferingUpdate(mediafile_hash, 10);
   			
         	if(!mediafile_downld_module_getrootbox_offset(g_downld_mediafile))

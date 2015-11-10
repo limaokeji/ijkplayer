@@ -432,6 +432,7 @@ typedef struct FFPlayer {
     const AVClass *av_class;
 
     int64_t playRequestTime; // add by tiangui @ 20151105
+    int isLimaoPlayMode; // add by tiangui @ 20151109
 
     /* ffplay context */
     VideoState *is;
