@@ -7,9 +7,11 @@
 #include "rmvbparse/RmvbDownldMediaFile.h"
 #include "../android/limao_api_jni.h"
 #include <string.h>
+#include <unistd.h>
 #define stricmp strcasecmp
-DownldMediaFile * g_downld_mediafile = NULL;
 FILE * g_mediafile_parse_log = NULL;
+
+DownldMediaFile * tmp_mediafile = NULL;
 int check_media_type(char * suffix_name)
 {
 	char * suffixName = suffix_name;
@@ -97,32 +99,32 @@ DownldMediaFile * get_downld_mediafile(int file_type)
 			case MOV:
 			case GP3:
 			case M4V:
-				g_downld_mediafile = new Mp4DownldMediaFile();
+				return new Mp4DownldMediaFile();
 				break;
 			case FLV:
-				g_downld_mediafile = NULL;
+				return NULL;
 				break;
 			case AVI:
-				g_downld_mediafile = NULL;
+				return NULL;
 				break;
 			case WMV:
-				g_downld_mediafile = NULL;
+				return NULL;
 				break;
 			case MKV:
-				g_downld_mediafile = new MkvDownldMediaFile();
+				return new MkvDownldMediaFile();
 				break;
 			case MPG:
-				g_downld_mediafile = NULL;
+				return NULL;
 				break;
 			case RMVB:
 			case RM:
-				g_downld_mediafile = new RmvbDownldMediaFile();
+				return new RmvbDownldMediaFile();
 				break;
 			default:
-				g_downld_mediafile = NULL;
+				return NULL;
 		}
 
-	return g_downld_mediafile;
+	return NULL;
 }
 
 int check_media_type_for_file_data(char * hash_name);
@@ -133,7 +135,7 @@ int check_media_type_for_file_data(char * hash_name);
  * @param suffix_name     the media file suffix name for player
  * @param filesize   the media file size
  */
-bool mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, char * play_mediefile_path, uint64_t filesize,
+void * mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, char * play_mediefile_path, uint64_t filesize,
 									DOWNLOADBLOCKINFO ** pdownload_blockinfo_list, FILE* plog_file)
 {
 	if(mediafile_hash == NULL)
@@ -168,35 +170,40 @@ bool mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, char
 				   "the suffix_name type is Not identified.\n",
 				   plog_file);
 	}
-	if(NULL == get_downld_mediafile(media_type))
+	DownldMediaFile * g_downld_mediafile;
+	g_downld_mediafile = get_downld_mediafile(media_type);
+	if(NULL == g_downld_mediafile)
 	{
 		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
 				   "the media file  type is Not Support.\n",
 				   plog_file);
+		return NULL;
 	}
-
-	g_mediafile_parse_log = fopen("/sdcard/limao/MediaFileParse.txt","w+");
+	tmp_mediafile = g_downld_mediafile;
+	if(g_mediafile_parse_log == NULL)
+		g_mediafile_parse_log = fopen("/sdcard/limao/MediaFileParse.txt","w+");
 	if(!g_downld_mediafile->Init(mediafile_hash, suffix_name, play_mediefile_path, filesize,g_mediafile_parse_log))
 	{
 		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
 				   "g_downld_mediafile init failed.\n",
 				   plog_file);
-		return false;
+		return NULL;
 	}
 
-	return true;
+	return g_downld_mediafile;
 }
 
 /**
  * finish
  */
-bool mediafile_downld_module_finish()
+bool mediafile_downld_module_finish(void * g_downld_mediafile)
 {
 	if(g_downld_mediafile != NULL)
 	{
-		delete g_downld_mediafile;
+		((DownldMediaFile *)g_downld_mediafile)->Finish();
+		delete (DownldMediaFile *)g_downld_mediafile;
 		g_downld_mediafile = NULL;
 	}
 	if(g_mediafile_parse_log!= NULL)
@@ -204,56 +211,69 @@ bool mediafile_downld_module_finish()
 		fclose(g_mediafile_parse_log);
 		g_mediafile_parse_log = NULL;
 	}
+
+	return true;
 }
 
 /**
  * get the mediafile root box offset and size for download
  */
-bool mediafile_downld_module_getrootbox_offset()
+bool mediafile_downld_module_getrootbox_offset(void * g_downld_mediafile)
 {
 	if(g_downld_mediafile == NULL)
 		return false;
-	return g_downld_mediafile->PraseRootBox();
+	return ((DownldMediaFile *)g_downld_mediafile)->PraseRootBox();
 }
 
 /**
  * get the mediafile root box but media data box. then the player info is ok
  */
-bool mediafile_downld_module_download_playerinfobox()
+bool mediafile_downld_module_download_playerinfobox(void * g_downld_mediafile)
 {
 	if(g_downld_mediafile == NULL)
 		return false;
-	return g_downld_mediafile->DownloadFileFirst();
+	return ((DownldMediaFile *)g_downld_mediafile)->DownloadFileFirst();
 }
 
 
 /**
  * download mediadata block by index
  */
-bool mediafile_downld_module_download_mediadatablock(int index)
+bool mediafile_downld_module_download_mediadatablock(void * g_downld_mediafile,int index)
 {
 	if(g_downld_mediafile == NULL)
 		return false;
-	return g_downld_mediafile->DownloadMdatBlock(index);
+	return ((DownldMediaFile *)g_downld_mediafile)->DownloadMdatBlock(index);
 }
 
 /**
  * get download mediadata block count
  */
-int mediafile_downld_module_getmediadatalock_count()
+int mediafile_downld_module_getmediadatalock_count(void * g_downld_mediafile)
 {
-	if(g_downld_mediafile == NULL)
+	if(tmp_mediafile == NULL)
 		return 0;
-	return g_downld_mediafile->GetMdataBlockCount();
+	if(g_downld_mediafile == NULL)
+	{
+		return tmp_mediafile->GetMdataBlockCount();
+	}
+	return ((DownldMediaFile *)g_downld_mediafile)->GetMdataBlockCount();
 }
 
-DOWNLOADBLOCKINFO * mediafile_downld_module_getblocklistinfo()
+DOWNLOADBLOCKINFO * mediafile_downld_module_getblocklistinfo(void * g_downld_mediafile)
 {
-	return g_downld_mediafile->GetDownloadBlockInfoList();
+	if(tmp_mediafile == NULL)
+		return 0;
+	if(g_downld_mediafile == NULL)
+	{
+		return tmp_mediafile->GetDownloadBlockInfoList();
+	}
+	return ((DownldMediaFile *)g_downld_mediafile)->GetDownloadBlockInfoList();
 }
 
 int check_media_type_for_file_data(char * hash_name)
 {
+	int loop = 15;
 	if(hash_name == NULL)
 	{
 		printf_log(LOG_ERROR,
@@ -269,13 +289,25 @@ int check_media_type_for_file_data(char * hash_name)
 			NULL);
 
 	int ret =  LimaoApi_downloadExt(hash_name,0,100*1024,1000);
-	if(ret != 0)
+	while(ret != 0 && loop >0)
 	{
 		printf_log(LOG_ERROR,
 				   "mediafile downld module init",
-				   "check_media_type_for_file_data p2p download  100*1024 data failed .\n",
+				   "download  100*1024 data failed  and Tay agine\n",
 				   NULL);
-		return -1;
+		sleep(1);
+		if(loop % 2 == 1)
+		{
+			LimaoApi_bufferingUpdate(hash_name,(15 - loop) /2);
+		}
+		loop--;
+		ret =  LimaoApi_downloadExt(hash_name,0,100*1024,1000);
+		if(ret == 0)
+			break;
+	}
+	if(ret != 0)
+	{
+		return ret;
 	}
 	printf_log(LOG_INFO,
 			"mediafile downld module init",

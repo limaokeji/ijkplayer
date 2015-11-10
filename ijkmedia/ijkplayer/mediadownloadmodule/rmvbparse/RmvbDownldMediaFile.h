@@ -43,5 +43,6 @@ public:
 	int GetMdataBlockCount();
 	bool DownloadMdatBlock(int index);
 	RmvbPrase * _pRmvbPrase;
+	int Finish();
 };
 #endif

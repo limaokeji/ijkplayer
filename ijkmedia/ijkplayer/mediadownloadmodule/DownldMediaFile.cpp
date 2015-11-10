@@ -18,6 +18,11 @@ DownldMediaFile::DownldMediaFile()
 }
 DownldMediaFile::~DownldMediaFile()
 {
+
+	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+			_mediaFileHash,
+			"~DownldMediaFile()",
+						   	pMediaFileDownldLog);
 	if(_mediaFileHash != NULL)
 	{
 		delete[] _mediaFileHash;
@@ -30,6 +35,10 @@ DownldMediaFile::~DownldMediaFile()
 	}
 	if(_pPlayerMediaFile != NULL)
 	{
+		printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+				"~DownldMediaFile()",
+				"fclose open media file",
+							   	pMediaFileDownldLog);
 		fclose(_pPlayerMediaFile);
 		_pPlayerMediaFile = NULL;
 	}

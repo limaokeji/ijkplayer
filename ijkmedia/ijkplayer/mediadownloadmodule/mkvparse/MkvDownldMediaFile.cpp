@@ -60,6 +60,23 @@ MkvDownldMediaFile::~MkvDownldMediaFile()
 		fclose(pkeyframeLog);
 #endif
 }
+int MkvDownldMediaFile::Finish()
+{
+	if (_downloadBlockInfoList != NULL)
+	{
+		free(_downloadBlockInfoList);
+		_downloadBlockInfoList = NULL;
+	}
+#ifdef FEYFRAMELOG
+	if(pkeyframeLog != NULL)
+		fclose(pkeyframeLog);
+#endif
+	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+					   "mkv finish",
+					   "delete the list memory\n",
+					   	pMediaFileDownldLog);
+	return 1;
+}
 bool MkvDownldMediaFile::PraseSeekInfoBlock(long offset, int64_t size, unsigned int& ID, int64_t& blockSize)
 {
 	unsigned char blockId[10] = { 0 };

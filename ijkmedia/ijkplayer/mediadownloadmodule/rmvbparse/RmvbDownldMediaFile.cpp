@@ -38,6 +38,29 @@ RmvbDownldMediaFile::~RmvbDownldMediaFile()
 		delete _pRmvbPrase;
 		_pRmvbPrase = NULL;
 	}
+	if(_downloadBlockInfoList != NULL)
+	{
+		delete[] _downloadBlockInfoList;
+		_downloadBlockInfoList =NULL;
+	}
+}
+int RmvbDownldMediaFile::Finish()
+{
+	if (_pRmvbPrase == NULL)
+	{
+		delete _pRmvbPrase;
+		_pRmvbPrase = NULL;
+	}
+	if(_downloadBlockInfoList != NULL)
+	{
+		delete[] _downloadBlockInfoList;
+		_downloadBlockInfoList = NULL;
+		printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+						   "rmvb finish",
+						   "delete the list memory\n",
+						   	pMediaFileDownldLog);
+	}
+	return 1;
 }
 int RmvbDownldMediaFile::RmvbCheckBoxType(char* buf)
 {

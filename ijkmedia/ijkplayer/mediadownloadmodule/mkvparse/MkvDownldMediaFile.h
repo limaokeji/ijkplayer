@@ -76,5 +76,6 @@ public:
 	bool DownloadMdatBlock(int index);
 	int GetMdataBlockCount();
 	bool CheckMdataBlcokDownload(int index);
+	int Finish();
 };
 #endif

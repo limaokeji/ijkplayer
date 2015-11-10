@@ -2544,7 +2544,7 @@ static int read_thread(void *arg)
         ffp_notify_msg1(ffp, FFP_REQ_START);
         ffp->auto_resume = 0;
     }
-    DOWNLOADBLOCKINFO * download_blockinfo_list = mediafile_downld_module_getblocklistinfo();
+    DOWNLOADBLOCKINFO * download_blockinfo_list = mediafile_downld_module_getblocklistinfo(NULL);
     if(download_blockinfo_list != NULL)
     {
     	keyframe_time_interval = (download_blockinfo_list+11)->timeStamp -  (download_blockinfo_list+10)->timeStamp;

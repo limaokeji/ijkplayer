@@ -35,7 +35,28 @@ Mp4DownldMediaFile::~Mp4DownldMediaFile()
 	//_mdatBlockSize = 0;
 	//_current = 0;
 	//_end = 0;
-
+	if(_downloadBlockInfoList != NULL)
+	{
+		delete[] _downloadBlockInfoList;
+		_downloadBlockInfoList = NULL;
+		printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+						   "mp4 finish",
+						   "delete the list memory\n",
+						   	pMediaFileDownldLog);
+	}
+}
+int Mp4DownldMediaFile:: Finish()
+{
+	if(_downloadBlockInfoList != NULL)
+	{
+		delete[] _downloadBlockInfoList;
+		_downloadBlockInfoList = NULL;
+		printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+						   "mp4 ~Mp4DownldMediaFile",
+						   "delete the list memory\n",
+						   	pMediaFileDownldLog);
+	}
+	return 1;
 }
 int Mp4DownldMediaFile::Mp4CheckBoxType( char* buf)
 {
@@ -263,100 +284,6 @@ bool Mp4DownldMediaFile::PraseRootBox()
 			   	pMediaFileDownldLog);
 	return true;
 }
-/*bool Mp4DownldMediaFile::PraseRootBox()
-{
-	unsigned char readBuf[100] = { 0 };
-	_current = 0;
-	fseek(_pInFile, 0, SEEK_END);
-	_end = ftell(_pInFile);
-	fseek(_pInFile, 0, SEEK_SET);
-	int64_t blockSize;
-	int len = fread(readBuf, 1, 100, _pInFile);
-	if (len != 100)
-	{
-		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
-				   "mp4 download parse root box type and size",
-				   "p2p download 100 Byte failed.\n",
-				   	pMediaFileDownldLog);
-		return false;
-	}
-	blockSize = _dataPrase.DataToBigEndianInt32(readBuf);
-	if (blockSize <= 0)
-	{
-		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
-				   "mp4 download parse root box type and size",
-				   "parse the box size failed.\n",
-				   	pMediaFileDownldLog);
-		return false;
-	}
-	fseek(_pInFile, blockSize, SEEK_SET);
-	_current = ftell(_pInFile);
-	_ftypBlockSize = blockSize;
-	while (_current < _end)
-	{
-		memset(readBuf, 0, 100);
-		len = fread(readBuf, 1, 100, _pInFile);
-		if (len <= 8)
-		{
-			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
-					   "mp4 download parse root box type and size",
-					   "p2p download 100 Byte failed..\n",
-					   	pMediaFileDownldLog);
-			return false;
-		}
-		blockSize = _dataPrase.DataToBigEndianInt32(readBuf);
-		if (blockSize <= 0)
-		{
-			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
-					   "mp4 download parse root box type and size",
-					   "parse the box size failed.\n",
-					   	pMediaFileDownldLog);
-			return false;
-		}
-		int type = Mp4CheckBoxType((char *)(readBuf + 4));
-		if (type == -1)
-		{
-			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
-					   "mp4 download parse root box type and size",
-					   "check box type is failed.\n",
-					   	pMediaFileDownldLog);
-			return false;
-		}
-		switch (type)
-		{
-		case FREE:
-			_freeBlockOffset[_freeBlockCount] = _current;
-			_freeBlockSize[_freeBlockCount++] = blockSize;
-			break;
-
-		case MOOV:
-			_moovBlockOffset = _current;
-			_moovBlockSize = blockSize;
-			break;
-		case MDAT:
-			_mdatBlockOffset = _current;
-			_mdatBlockSize = blockSize;
-			break;
-		default:
-			_freeBlockOffset[_freeBlockCount] = _current;
-			_freeBlockSize[_freeBlockCount++] = blockSize;
-			break;
-		}
-
-		if (_current + blockSize >= _end)
-		{
-			return true;
-		}
-		_current = blockSize + _current;
-		fseek(_pInFile, _current, SEEK_SET);
-	}
-
-	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
-			   "mp4 download parse root box type and size",
-			   "prase the mp4 file root box success.\n",
-			   	pMediaFileDownldLog);
-	return true;
-}*/
 
 bool Mp4DownldMediaFile::GetDownloadOffset()
 {
@@ -601,6 +528,7 @@ bool Mp4DownldMediaFile::DownloadMdatBlock(int index)
 				   "download the mp4 file a block media data",
 				   "the p2p module downlaod failed.\n",
 				   	pMediaFileDownldLog);
+		return false;
 	}
 	_downloadBlockInfoList[index].isDownload = true;
 

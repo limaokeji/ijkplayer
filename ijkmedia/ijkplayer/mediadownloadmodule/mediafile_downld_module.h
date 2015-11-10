@@ -3,6 +3,7 @@
 
 #include "DataType.h"
 #include <stdio.h>
+
 //static  DOWNLOADBLOCKINFO * g_downloadBlockInfoList = NULL;
 //static  FILE * g_downloadModuleLogFile = NULL;
 
@@ -39,37 +40,37 @@ extern "C" {
  * @param suffix_name     the media file suffix name for player
  * @param filesize   the media file size
  */
-bool mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, char * play_mediefile_path, uint64_t filesize,
+void * mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, char * play_mediefile_path, uint64_t filesize,
 									DOWNLOADBLOCKINFO ** pdownload_blockinfo_list, FILE* plog_file);
 
 /**
  * finish
  */
-bool mediafile_downld_module_finish();
+bool mediafile_downld_module_finish(void * g_downld_mediafile);
 
 /**
  * get the mediafile root box offset and size for download
  */
-bool mediafile_downld_module_getrootbox_offset();
+bool mediafile_downld_module_getrootbox_offset(void * g_downld_mediafile);
 
 /**
  * get the mediafile root box but media data box. then the player info is ok
  */
-bool mediafile_downld_module_download_playerinfobox();
+bool mediafile_downld_module_download_playerinfobox(void * g_downld_mediafile);
 
 
 /**
  * download mediadata block by index
  */
-bool mediafile_downld_module_download_mediadatablock(int index);
+bool mediafile_downld_module_download_mediadatablock(void * g_downld_mediafile,int index);
 
 /**
  * get download mediadata block count
  */
-int mediafile_downld_module_getmediadatalock_count();
+int mediafile_downld_module_getmediadatalock_count(void * g_downld_mediafile);
 
 
-DOWNLOADBLOCKINFO * mediafile_downld_module_getblocklistinfo();
+DOWNLOADBLOCKINFO * mediafile_downld_module_getblocklistinfo(void * g_downld_mediafile);
 #ifdef __cplusplus
 }
 #endif
