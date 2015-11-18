@@ -154,24 +154,17 @@ void * mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, ch
 	}
 
 	int tmp_media_type = check_media_type_for_file_data(mediafile_hash);
-	int media_type = -1;
-	if(tmp_media_type != -1)
-	{
-		media_type = tmp_media_type;
-	}else
-	{
-		media_type = check_media_type(suffix_name);
-	}
 
-	if(media_type == -1)
+	if(tmp_media_type == -1)
 	{
 		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
-				   "the suffix_name type is Not identified.\n",
+				   "check media type for file data failed.",
 				   plog_file);
+		return NULL;
 	}
 	DownldMediaFile * g_downld_mediafile;
-	g_downld_mediafile = get_downld_mediafile(media_type);
+	g_downld_mediafile = get_downld_mediafile(tmp_media_type);
 	if(NULL == g_downld_mediafile)
 	{
 		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
@@ -296,10 +289,10 @@ int check_media_type_for_file_data(char * hash_name)
 				   "download  100*1024 data failed  and Tay agine\n",
 				   NULL);
 		sleep(1);
-		if(loop % 2 == 1)
+/*		if(loop % 2 == 1)
 		{
 			LimaoApi_bufferingUpdate(hash_name,(15 - loop) /2);
-		}
+		}*/
 		loop--;
 		ret =  LimaoApi_downloadExt(hash_name,0,100*1024,1000);
 		if(ret == 0)
@@ -307,7 +300,7 @@ int check_media_type_for_file_data(char * hash_name)
 	}
 	if(ret != 0)
 	{
-		return ret;
+		return -1;
 	}
 	printf_log(LOG_INFO,
 			"mediafile downld module init",
