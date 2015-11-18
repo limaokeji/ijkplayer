@@ -9,7 +9,6 @@
 #include <string.h>
 #define stricmp strcasecmp
 DownldMediaFile * g_downld_mediafile = NULL;
-FILE * g_mediafile_parse_log = NULL;
 int check_media_type(char * suffix_name)
 {
 	char * suffixName = suffix_name;
@@ -125,7 +124,7 @@ DownldMediaFile * get_downld_mediafile(int file_type)
 	return g_downld_mediafile;
 }
 
-int check_media_type_for_file_data(char * hash_name);
+int check_media_type_for_file_data(char * hash_name,FILE * plog_file);
 
 /**
  * init
@@ -151,7 +150,7 @@ bool mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, char
 				   plog_file);
 	}
 
-	int tmp_media_type = check_media_type_for_file_data(mediafile_hash);
+	int tmp_media_type = check_media_type_for_file_data(mediafile_hash,plog_file);
 	int media_type = -1;
 	if(tmp_media_type != -1)
 	{
@@ -176,8 +175,8 @@ bool mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, char
 				   plog_file);
 	}
 
-	g_mediafile_parse_log = fopen("/sdcard/limao/MediaFileParse.txt","w+");
-	if(!g_downld_mediafile->Init(mediafile_hash, suffix_name, play_mediefile_path, filesize,g_mediafile_parse_log))
+
+	if(!g_downld_mediafile->Init(mediafile_hash, suffix_name, play_mediefile_path, filesize,plog_file))
 	{
 		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
@@ -199,11 +198,7 @@ bool mediafile_downld_module_finish()
 		delete g_downld_mediafile;
 		g_downld_mediafile = NULL;
 	}
-	if(g_mediafile_parse_log!= NULL)
-	{
-		fclose(g_mediafile_parse_log);
-		g_mediafile_parse_log = NULL;
-	}
+
 }
 
 /**
@@ -251,8 +246,11 @@ DOWNLOADBLOCKINFO * mediafile_downld_module_getblocklistinfo()
 {
 	return g_downld_mediafile->GetDownloadBlockInfoList();
 }
-
-int check_media_type_for_file_data(char * hash_name)
+FILE * mediafile_downld_module_getlogfile()
+{
+	return g_downld_mediafile->GetLogFile();
+}
+int check_media_type_for_file_data(char * hash_name,FILE * plog_file)
 {
 	if(hash_name == NULL)
 	{
@@ -292,14 +290,37 @@ int check_media_type_for_file_data(char * hash_name)
 				   NULL);
 		return -1;
 	}
+	if(plog_file == NULL)
+	{
+		for(int i = strlen(local_file_name)-1;i>1; i--)
+		{
+			if(local_file_name[i] == '.')
+			{
+				local_file_name[i+1] = 0;
+				char  log_file_name[256] = {0};
+				strcpy(log_file_name,local_file_name);
+				strcat(log_file_name,"txt");
 
+				plog_file = fopen(log_file_name,"rb");
+				if(plog_file == NULL)
+				{
+					printf_log(LOG_ERROR,
+							   "mediafile downld module init",
+							   "check_media_type_for_file_data open file failed .\n",
+							   NULL);
+					return -1;
+				}
+				break;
+			}
+		}
+	}
 	FILE * pFile = fopen(local_file_name,"rb");
 	if(pFile == NULL)
 	{
-		printf_log(LOG_ERROR,
+		printf_log(LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
 				   "check_media_type_for_file_data open file failed .\n",
-				   NULL);
+				   plog_file);
 		return -1;
 	}
 	unsigned char readBuf[100] = {0};
@@ -307,10 +328,10 @@ int check_media_type_for_file_data(char * hash_name)
 	ret = fread(readBuf,1,100,pFile);
 	if(ret != 100)
 	{
-		printf_log(LOG_ERROR,
+		printf_log(LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
 				   "check_media_type_for_file_data fread file failed .\n",
-				   NULL);
+				   plog_file);
 		fclose(pFile);
 		pFile = NULL;
 		return -1;
@@ -319,34 +340,34 @@ int check_media_type_for_file_data(char * hash_name)
 	if((readBuf[4] == 0x66) && (readBuf[5] == 0x74) && (readBuf[6] == 0x79) && (readBuf[7] == 0x70))
 	{
 
-		printf_log(LOG_INFO,
+		printf_log(LOG_INFO|LOG_FILE,
 				   "mediafile downld module init",
 				   "check_media_type_for_file_data  check MP4\n",
-				   NULL);
+				   plog_file);
 		fclose(pFile);
 		pFile = NULL;
 		return MP4;
 	}else if((readBuf[0] == 0x2E) && (readBuf[1] == 0x52) && (readBuf[2] == 0x4D) && (readBuf[3] == 0x46)) // 2E 52 4D 46
 	{
-		printf_log(LOG_INFO,
+		printf_log(LOG_INFO|LOG_FILE,
 				   "mediafile downld module init",
 				   "check_media_type_for_file_data  check RMVB\n",
-				   NULL);
+				   plog_file);
 		fclose(pFile);
 		pFile = NULL;
 		return RMVB;
 	}else if((readBuf[0] == 0x1A) && (readBuf[1] == 0x45) && (readBuf[2] == 0xDF) && (readBuf[3] == 0xA3)){  //00000000h: 1A 45 DF A3                                     ; .E撸
-		printf_log(LOG_INFO,
+		printf_log(LOG_INFO|LOG_FILE,
 				   "mediafile downld module init",
 				   "check_media_type_for_file_data  check MKV\n",
-				   NULL);
+				   plog_file);
 		fclose(pFile);
 		pFile = NULL;
 		return MKV;
 	}
-	printf_log(LOG_INFO,
+	printf_log(LOG_INFO|LOG_FILE,
 			   "mediafile downld module init",
 			   "check_media_type_for_file_data  not check file type\n",
-			   NULL);
+			   plog_file);
 	return -1;
 }

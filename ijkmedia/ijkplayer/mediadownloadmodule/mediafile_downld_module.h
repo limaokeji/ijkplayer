@@ -70,6 +70,8 @@ int mediafile_downld_module_getmediadatalock_count();
 
 
 DOWNLOADBLOCKINFO * mediafile_downld_module_getblocklistinfo();
+
+FILE * mediafile_downld_module_getlogfile();
 #ifdef __cplusplus
 }
 #endif
