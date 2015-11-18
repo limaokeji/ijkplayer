@@ -94,11 +94,19 @@ int Mp4DownldMediaFile::Mp4CheckBoxType( char* buf)
 }
 bool Mp4DownldMediaFile::PraseRootBox()
 {
+	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+			   "mp4 download parse root box type and size",
+			   "prase the mp4 file root box in.\n",
+			   	pMediaFileDownldLog);
 	int ret = -1;
 	unsigned char readBuf[100] = { 0 };
 	_current = 0;
 	if(0 != P2pDownloadMediaData(0,MEDIAFILEPARSELEN))
 	{
+		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+				   "mp4 download parse root box type and size",
+				   "P2pDownloadMediaData MEDIAFILEPARSELEN failed.\n",
+				   	pMediaFileDownldLog);
 		return false;
 	}
 
@@ -142,6 +150,10 @@ bool Mp4DownldMediaFile::PraseRootBox()
 				   	pMediaFileDownldLog);
 	if(_end <= 0)
 	{
+		printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+				   "mp4 download parse root box type and size",
+				   "_end < = 0.",
+				   	pMediaFileDownldLog);
 		return false;
 	}
 

@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "ff_ffplay.h"
+
 
 /**
  * @file
@@ -66,15 +66,17 @@
 #include "ijkmeta.h"
 #include "ijksdl/ijksdl_log.h"
 
-
+#include "./mediadownloadmodule/mediafile_download_log.h"
+#include "./mediadownloadmodule/mediafile_downld_module.h"
+#include "ff_ffplay.h"
 #define  ffp_toggle_buffering  limao_player_pause_start
-typedef struct DownloadBlockInfo
+/*typedef struct DownloadBlockInfo
 {
 	unsigned int smapleId;
 	unsigned long offset;
 	uint64_t timeStamp;
 	bool isDownload;
-}DOWNLOADBLOCKINFO;
+}DOWNLOADBLOCKINFO;*/
 
 // FIXME: 9 work around NDKr8e or gcc4.7 bug
 // isnan() may not recognize some double NAN, so we test both double and float
@@ -2285,14 +2287,23 @@ void send_download_req(FFPlayer *ffp, int index)
 		MessageQueue *msg_queue = LimaoApi_MQ_map_get(ffp->playRequestTime);
 		if (msg_queue == NULL) {
 			__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek send_download_req: msg_queue == NULL");
+
 			return;
 		}
 
 		//msg_queue_put_simple2(LimaoApi_get_msg_queue(), LM_MSG_PLAYER_SEEK, index);
 		msg_queue_put_simple2(msg_queue, LM_MSG_PLAYER_SEEK, index);
 
+
 		//_test;
-		__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek send_download_req index %d", index);
+		FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+		char logbuf[100] = {0};
+		sprintf(logbuf,"lmk seek send_download_req index %d", index);
+		printf_log(LOG_WARN|LOG_FILE,
+				   "ijkplayer",
+				   logbuf,
+				   pfile);
+		//__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek send_download_req index %d", index);
 		curReqBlockIndex = index;
 	}
 }
@@ -2591,21 +2602,44 @@ static int read_thread(void *arg)
             int64_t seek_max    = is->seek_rel < 0 ? seek_target - is->seek_rel - 2: INT64_MAX;
 
             int64_t timestamp =  (seek_target / AV_TIME_BASE) / av_q2d(ic->streams[AVMEDIA_TYPE_VIDEO]->time_base);
-            __android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek req: seek target is %llu, time stamp %llu", seek_target,timestamp);
+            FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+            char logbuf[200] = {0};
+			sprintf(logbuf,"lmk seek req: seek target is %llu, time stamp %llu", seek_target,timestamp);
+			printf_log(LOG_INFO|LOG_FILE,
+					   "ijkplayer",
+					   logbuf,
+					   pfile);
+           // __android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek req: seek target is %llu, time stamp %llu", seek_target,timestamp);
+
             one_second_timestamp = 0;
             if (!isBlockDownload(timestamp + one_second_timestamp)) // FIXME
 			{
-            	__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek is not BlockDownload send_download_req");
+            	FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+    			printf_log(LOG_INFO|LOG_FILE,
+    					   "ijkplayer",
+    					   "lmk seek is not BlockDownload send_download_req",
+    					   pfile);
+            	//__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek is not BlockDownload send_download_req");
 
 				send_download_req(ffp, timestamp_2_blockIndex(timestamp + one_second_timestamp));
 				if(ffp->is->pause_req == 0)
 				{
 					limao_player_pause_start(ffp, 1);   //pause
 					seek_pause = 1;
-					__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek to pause");
+					pfile = mediafile_downld_module_getlogfile(NULL);
+	    			printf_log(LOG_WARN|LOG_FILE,
+	    					   "ijkplayer",
+	    					   "mk seek to pause",
+	    					   pfile);
 				}
 				SDL_Delay(1000);
-				__android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek to time  is not download, sdl delay 1000 timestamp is %llu + %llu",timestamp , one_second_timestamp);
+				pfile = mediafile_downld_module_getlogfile(NULL);
+				sprintf(logbuf,"lmk seek to time  is not download, sdl delay 1000 timestamp is %llu + %llu",timestamp , one_second_timestamp);
+				printf_log(LOG_INFO|LOG_FILE,
+						   "ijkplayer",
+						   logbuf,
+						   pfile);
+				//__android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek to time  is not download, sdl delay 1000 timestamp is %llu + %llu",timestamp , one_second_timestamp);
 
 				continue;
 			}else
@@ -2615,10 +2649,20 @@ static int read_thread(void *arg)
 				{
 					limao_player_pause_start(ffp, 0);   // start
 					seek_pause = 0;
-					__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek to start");
+					FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+					printf_log(LOG_WARN|LOG_FILE,
+							   "ijkplayer",
+							   "lmk seek to start",
+							   pfile);
+					//__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek to start");
 				}else
 				{
-					__android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek to start already download");
+					FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+					printf_log(LOG_WARN|LOG_FILE,
+							   "ijkplayer",
+							   "lmk seek to start already download",
+							   pfile);
+					//__android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek to start already download");
 
 					send_download_req(ffp, timestamp_2_blockIndex(timestamp + one_second_timestamp));
 				}
@@ -2759,11 +2803,25 @@ static int read_thread(void *arg)
 			{
 				limao_player_pause_start(ffp, 1);   // pause
 				read_packet_pause = 1;
-				__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk read packet to pause %llu",g_timestamp);
+
+				FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+				char logbuf[100] = {0};
+				sprintf(logbuf,"lmk read packet to pause %llu",g_timestamp);
+				printf_log(LOG_WARN|LOG_FILE,
+						   "ijkplayer",
+						   logbuf,
+						   pfile);
+				//__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk read packet to pause %llu",g_timestamp);
 			}
 			SDL_Delay(2000);
-
-            __android_log_print(ANDROID_LOG_INFO,"lmk test","lmk the read frame is not download, sdl delay 2000 timestamp is %llu + %llu",g_timestamp , one_second_timestamp);
+			char logbuf[200] = {0};
+			FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+			sprintf(logbuf,"lmk the read frame is not download, sdl delay 2000 timestamp is %llu + %llu",g_timestamp , one_second_timestamp);
+			printf_log(LOG_INFO|LOG_FILE,
+					   "ijkplayer",
+					   logbuf,
+					   pfile);
+          //  __android_log_print(ANDROID_LOG_INFO,"lmk test","lmk the read frame is not download, sdl delay 2000 timestamp is %llu + %llu",g_timestamp , one_second_timestamp);
             continue;
 		}else
 		{
@@ -2772,7 +2830,14 @@ static int read_thread(void *arg)
 			{
 				limao_player_pause_start(ffp, 0);   // start
 				read_packet_pause = 0;
-				__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk read packet to start %llu",g_timestamp);
+				FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+				char logbuf[200] = {0};
+				sprintf(logbuf,"lmk read packet to start %llu",g_timestamp);
+				printf_log(LOG_WARN|LOG_FILE,
+						   "ijkplayer",
+						   logbuf,
+						   pfile);
+				//__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk read packet to start %llu",g_timestamp);
 			}
 
 		}
@@ -2787,8 +2852,14 @@ static int read_thread(void *arg)
 				{
 					if((pkt->pts - g_timestamp) > keyframe_time_interval)
 					{
-
-						__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk av_read_frame pkt->pts is not Normal g_timestamp  %llu pkt->pts %llu ",g_timestamp, pkt->pts);
+						FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+						char logbuf[200] = {0};
+						sprintf(logbuf,"lmk av_read_frame pkt->pts is not Normal g_timestamp  %llu pkt->pts %llu ",g_timestamp, pkt->pts);
+						printf_log(LOG_WARN|LOG_FILE,
+								   "ijkplayer",
+								   logbuf,
+								   pfile);
+						//__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk av_read_frame pkt->pts is not Normal g_timestamp  %llu pkt->pts %llu ",g_timestamp, pkt->pts);
 						g_timestamp = pkt->pts;
 
 					}else
@@ -3562,7 +3633,6 @@ int ffp_packet_queue_put(PacketQueue *q, AVPacket *pkt)
 {
     return packet_queue_put(q, pkt);
 }
-
 bool ffp_is_flush_packet(AVPacket *pkt)
 {
     if (!pkt)

@@ -171,3 +171,7 @@ bool DownldMediaFile::IsDownloadMdatBlock(int index)
 	}
 	return (_downloadBlockInfoList+index)->isDownload;
 }
+FILE * DownldMediaFile::GetLogFile()
+{
+	return pMediaFileDownldLog;
+}

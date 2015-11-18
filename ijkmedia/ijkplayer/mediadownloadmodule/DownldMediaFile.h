@@ -25,6 +25,7 @@ public:
 	virtual int Finish(){return 0;}
 	bool IsDownloadMdatBlock(int index);
 	DOWNLOADBLOCKINFO * GetDownloadBlockInfoList();
+	FILE * GetLogFile();
 	char * _playMediaFilePath;
 	char * _mediaFileHash;
 	FILE* _pPlayerMediaFile;

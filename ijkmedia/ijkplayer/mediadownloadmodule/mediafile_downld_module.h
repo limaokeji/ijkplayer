@@ -41,7 +41,7 @@ extern "C" {
  * @param filesize   the media file size
  */
 void * mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, char * play_mediefile_path, uint64_t filesize,
-									DOWNLOADBLOCKINFO ** pdownload_blockinfo_list, FILE* plog_file);
+									DOWNLOADBLOCKINFO ** pdownload_blockinfo_list, FILE** plog_file);
 
 /**
  * finish
@@ -70,7 +70,12 @@ bool mediafile_downld_module_download_mediadatablock(void * g_downld_mediafile,i
 int mediafile_downld_module_getmediadatalock_count(void * g_downld_mediafile);
 
 
+
 DOWNLOADBLOCKINFO * mediafile_downld_module_getblocklistinfo(void * g_downld_mediafile);
+
+
+FILE * mediafile_downld_module_getlogfile(void * g_downld_mediafile);
+
 #ifdef __cplusplus
 }
 #endif
