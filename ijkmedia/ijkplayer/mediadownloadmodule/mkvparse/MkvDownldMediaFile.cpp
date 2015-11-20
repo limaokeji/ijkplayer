@@ -38,10 +38,22 @@ MkvDownldMediaFile::MkvDownldMediaFile()
 	_otherBlockCount = 0;
 	memset(_otherBlcokOffset,0,sizeof(long));
 	memset(_otherBlockSize,0,sizeof(int64_t));
-
+	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
+			_mediaFileHash,
+			"MKVDownldMediaFile()",
+						   	pMediaFileDownldLog);
+	printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+					   "mkv new",
+					   "malloc memory\n",
+					   	pMediaFileDownldLog);
 	_syncSampleCount = 0;
+	_downloadBlockInfoList = NULL;
 	_downloadBlockInfoList = (DOWNLOADBLOCKINFO *)malloc(sizeof(DOWNLOADBLOCKINFO)* 101);
-	memset(_downloadBlockInfoList, 0, sizeof(DOWNLOADBLOCKINFO)* 101);
+	if(_downloadBlockInfoList != NULL)
+	{
+		memset(_downloadBlockInfoList, 0, sizeof(DOWNLOADBLOCKINFO)* 101);
+	}
+
 
 
 #ifdef FEYFRAMELOG
@@ -424,9 +436,21 @@ bool MkvDownldMediaFile::PraseCuePoint(unsigned char * buffer,int len)
 		blockSize = GetBlockSize(blockSizeBuf, blockSizeBufLen);
 
 		int64_t timestamp = GetBlockSize(buffer + idLen + blockSizeBufLen, blockSize);
+
+		if(_downloadBlockInfoList == NULL)
+		{
+			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+									   "mkv download get offset info",
+									    "_downloadBlockInfoList == NULL",
+									   	pMediaFileDownldLog);
+			return false;
+		}
 		_downloadBlockInfoList[_syncSampleCount].timeStamp = timestamp;
+
 		_downloadBlockInfoList[_syncSampleCount].isDownload = false;
+
 		_downloadBlockInfoList[_syncSampleCount].smapleId = _syncSampleCount;
+
 
 #ifdef FEYFRAMELOG
 	if(pkeyframeLog != NULL)

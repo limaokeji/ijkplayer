@@ -2342,9 +2342,16 @@ static int read_thread(void *arg)
 #endif
     is->eof = 0;
 
-	//char _testBuf[100];
-	//sprintf(_testBuf, "isLimaoPlayMode = %d", ffp->isLimaoPlayMode);
-	//__android_log_print(ANDROID_LOG_DEBUG, "AAA: lmk test", _testBuf);
+
+   // g_timestamp = 0; // add by lmk
+    FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+    char logbuf[200] = {0};
+	sprintf(logbuf,"read_thread init, time stamp %llu",g_timestamp);
+	printf_log(LOG_ERROR|LOG_FILE,
+			   "ijkplayer",
+			   logbuf,
+			   pfile);
+	 g_timestamp = 0; // add by lmk
 
     ic = avformat_alloc_context();
     if (!ic) {

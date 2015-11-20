@@ -9,7 +9,7 @@
 #define  CLUSTER		 0x1F43B675
 #define  CUES            0x1C53BB6B 
 
-#define FEYFRAMELOG 1
+
 class MkvDownldMediaFile :public DownldMediaFile
 {
 private:

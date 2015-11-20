@@ -61,7 +61,6 @@ bool DownldMediaFile::Init(char * fileNamehash,char * suffix_name, char * playMe
 
 	_medieFileSize = filesize;
 	pMediaFileDownldLog = plog_file;
-	_downloadBlockInfoList = NULL;
 	return true;
 }
 int DownldMediaFile::P2pDownloadMediaData(long offset, int64_t blockSize)

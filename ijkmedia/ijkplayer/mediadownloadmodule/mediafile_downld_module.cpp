@@ -362,8 +362,8 @@ int check_media_type_for_file_data(char * hash_name,FILE ** plog_file)
 				if(*plog_file == NULL)
 				{
 					printf_log(LOG_ERROR,
-							   "mediafile downld module init",
-							   "check_media_type_for_file_data open log file failed .",
+							   "mediafile downld module init check_media_type_for_file_data open log file failed .",
+							   log_file_name,
 							   NULL);
 					return -1;
 				}
