@@ -38,7 +38,7 @@ extern "C" {
 #define LM_MSG_DOWNLOAD_REQ    22001
 
 typedef struct {
-	char fileHash[32 + 4];
+	char fileHash[100 + 4];
 	char filenameExtension[8 + 4];
 	int64_t fileSize;
 	int64_t playRequestTime;
@@ -62,13 +62,13 @@ int64_t LimaoApi_get_playRequestTime();
 
 void LimaoApi_set_playRequestTime(int64_t time);
 
-void LimaoApi_prepareOK(char *fileHash);
+void LimaoApi_prepareOK(char *fileHash, char* filePath);
 
 void LimaoApi_bufferingUpdate(char *fileHash, int percent);
 
 int LimaoApi_download(char *fileHash, int64_t offset, int64_t size);
 
-int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeout);
+int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size,volatile const int *quit, int timeout);
 
 /*
  * return: 1-yes, 0-no

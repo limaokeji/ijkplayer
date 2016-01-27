@@ -60,6 +60,7 @@ int RmvbDownldMediaFile::Finish()
 						   "delete the list memory\n",
 						   	pMediaFileDownldLog);
 	}
+	pMediaFileDownldLog = NULL;
 	return 1;
 }
 int RmvbDownldMediaFile::RmvbCheckBoxType(char* buf)

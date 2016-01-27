@@ -22,6 +22,14 @@ int timestamp_2_blockIndex(uint64_t timestamp)
 {
 	int download_block_count = mediafile_downld_module_getmediadatalock_count(NULL);
 	DOWNLOADBLOCKINFO * download_blockinfo_list = mediafile_downld_module_getblocklistinfo(NULL);
+	if(download_blockinfo_list == NULL)
+	{
+		printf_log(LOG_ERROR,
+					   "ijkplayer seek ",
+					   "lmk timestamp_2_blockIndex download_blockinfo_list is Null",
+					   	NULL);
+		return -1;
+	}
 	char logBuf[200] = { 0 };
 	for (int i = 0; i < download_block_count - 1; i++)
 	{
@@ -46,6 +54,14 @@ int isBlockDownload(uint64_t timestamp)
 {
 	int download_block_count = mediafile_downld_module_getmediadatalock_count(NULL);
 	DOWNLOADBLOCKINFO * download_blockinfo_list = mediafile_downld_module_getblocklistinfo(NULL);
+	if(download_blockinfo_list == NULL)
+	{
+		printf_log(LOG_ERROR,
+					   "ijkplayer seek ",
+					   "lmk isBlockDownload download_blockinfo_list is null",
+					   	NULL);
+		return 0;
+	}
 	if(timestamp < download_blockinfo_list[2].timeStamp)
 	{
 		return  1;

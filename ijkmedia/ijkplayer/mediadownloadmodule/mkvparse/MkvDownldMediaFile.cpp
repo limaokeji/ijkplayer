@@ -87,6 +87,7 @@ int MkvDownldMediaFile::Finish()
 					   "mkv finish",
 					   "delete the list memory\n",
 					   	pMediaFileDownldLog);
+	pMediaFileDownldLog = NULL;
 	return 1;
 }
 bool MkvDownldMediaFile::PraseSeekInfoBlock(long offset, int64_t size, unsigned int& ID, int64_t& blockSize)

@@ -38,5 +38,7 @@ public:
 	int _syncSampleCount;
 	uint64_t _duration;
 
+	int _quit;
+
 };
 #endif

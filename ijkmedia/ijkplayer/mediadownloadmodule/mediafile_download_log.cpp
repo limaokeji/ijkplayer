@@ -7,6 +7,11 @@
 #define   LOG_FILE		16
 */
 int printf_log(int flags ,const char * location,const char * format,FILE * log_file){
+	if((location == NULL) ||(format== NULL))
+	{
+		 __android_log_print(ANDROID_LOG_ERROR,"lmk media file download", "printf_log arg is invalid");
+		return -1;
+	}
 	if(flags & LOG_INFO )
 	{
 		 __android_log_print(ANDROID_LOG_INFO,"lmk media file download", "lmk %s   |   %s ",location,format);
@@ -32,6 +37,6 @@ int printf_log(int flags ,const char * location,const char * format,FILE * log_f
 		}
 	}
 
-
+	fflush(log_file);
 	return 0;
 }

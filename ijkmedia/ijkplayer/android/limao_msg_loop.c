@@ -97,13 +97,14 @@ static void message_loop_x(ThreadLocalData_t *pData)
 	int64_t fileSize;
 	char * mediafile_hash;
 	char * suffix_name;
+	char * filePath;
 	limao_api_param_4_prepareToPlay_t *param;
 	DOWNLOADBLOCKINFO * pdownload_blockinfo_list = NULL;
 	void * g_downld_mediafile = NULL;
 
 	MessageQueue *msg_queue = pData->msg_queue;
 	//pthread_key_create(&pthread_key_1, NULL);
-	ALOGD("LimaoApi: message_loop_x()");
+	char logbuf[200] = {0};
 	FILE * g_mediafile_parse_log = NULL;
 	int quit = 0;
 
@@ -121,7 +122,7 @@ static void message_loop_x(ThreadLocalData_t *pData)
     			fclose(g_mediafile_parse_log);
     			g_mediafile_parse_log = NULL;
 				printf_log(LOG_INFO,
-						   "mediafile downld module init",
+						   "mediafile downld module finish",
 						   "fclose.",
 						   NULL);
     		}
@@ -254,7 +255,8 @@ static void message_loop_x(ThreadLocalData_t *pData)
 			}
 			LimaoApi_bufferingUpdate(mediafile_hash, 90);
 
-           	LimaoApi_prepareOK(mediafile_hash);
+			filePath =mediafile_downld_module_download_mediafilepath(g_downld_mediafile);
+           	LimaoApi_prepareOK(mediafile_hash,filePath);
 
 			LimaoApi_download(mediafile_hash, 0, LimaoApi_getFileSize(mediafile_hash)); // _test
 
@@ -302,13 +304,18 @@ static void message_loop_x(ThreadLocalData_t *pData)
 
         case LM_MSG_PLAYER_SEEK:
         	block_index = msg.arg1;
+        	sprintf(logbuf,"the download index is %d",block_index);
+			printf_log(LOG_INFO|LOG_FILE,
+				   "ijkplayer media file download medule thread",
+				   logbuf,
+				   g_mediafile_parse_log);
         	ALOGI("LM_MSG_PLAYER_SEEK in. %d.",block_index);
         	LimaoApi_bufferingUpdate(mediafile_hash, 0);
 			if((block_index<=0)||(block_index >= block_count))
 			{
 				printf_log(LOG_WARN|LOG_FILE,
 					   "ijkplayer media file download medule thread",
-					   "the download index is invalid.\n",
+					   "the download index is invalid.",
 					   g_mediafile_parse_log);
 				block_index = 3;
 			}

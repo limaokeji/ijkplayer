@@ -41,7 +41,7 @@
 #define IJK_LOG_FATAL       ANDROID_LOG_FATAL
 #define IJK_LOG_SILENT      ANDROID_LOG_SILENT
 
-#define VLOG(level, TAG, ...)    //((void)__android_log_print(level, TAG, __VA_ARGS__))
+#define VLOG(level, TAG, ...)    //((void)__android_log_print(level, TAG, __VA_ARGS__)) //tm da keng a
 #define ALOG(level, TAG, ...)    //((void)__android_log_print(level, TAG, __VA_ARGS__))
 
 #else

@@ -177,6 +177,7 @@ void * mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, ch
 		return NULL;
 	}
 	DownldMediaFile * g_downld_mediafile;
+	tmp_mediafile = NULL;
 	g_downld_mediafile = get_downld_mediafile(tmp_media_type);
 	if(NULL == g_downld_mediafile)
 	{
@@ -293,6 +294,13 @@ FILE * mediafile_downld_module_getlogfile(void * g_downld_mediafile)
 	return ((DownldMediaFile *)g_downld_mediafile)->GetLogFile();
 
 }
+
+char * mediafile_downld_module_download_mediafilepath(void * g_downld_mediafile)
+{
+	if(g_downld_mediafile == NULL)
+		return false;
+	return ((DownldMediaFile *)g_downld_mediafile)->GetPlayFileNamePath();
+}
 int check_media_type_for_file_data(char * hash_name,FILE ** plog_file)
 {
 	int loop = 2;
@@ -309,8 +317,16 @@ int check_media_type_for_file_data(char * hash_name,FILE ** plog_file)
 			"mediafile downld module init",
 			"check_media_type_for_file_data p2p download  100*1024 data\n",
 			NULL);
-
-	int ret =  LimaoApi_downloadExt(hash_name,0,100*1024,1000);
+	int quit = 0;
+	int ret =  LimaoApi_download(hash_name,0,100*1024);
+	if(ret != 0)
+	{
+		printf_log(LOG_ERROR,
+				"mediafile downld module init",
+				"check_media_type_for_file_data send download order 100*1024 data\n",
+				NULL);
+	}
+	ret =  LimaoApi_downloadExt(hash_name,0,100*1024,&quit, 1000);
 	while(ret != 0 && loop >0)
 	{
 		printf_log(LOG_ERROR,
@@ -323,7 +339,7 @@ int check_media_type_for_file_data(char * hash_name,FILE ** plog_file)
 			LimaoApi_bufferingUpdate(hash_name,(15 - loop) /2);
 		}*/
 		loop--;
-		ret =  LimaoApi_downloadExt(hash_name,0,100*1024,1000);
+		ret =  LimaoApi_downloadExt(hash_name,0,100*1024,&quit,1000);
 		if(ret == 0)
 			break;
 	}

@@ -76,6 +76,7 @@ DOWNLOADBLOCKINFO * mediafile_downld_module_getblocklistinfo(void * g_downld_med
 
 FILE * mediafile_downld_module_getlogfile(void * g_downld_mediafile);
 
+char * mediafile_downld_module_download_mediafilepath(void * g_downld_mediafile);
 #ifdef __cplusplus
 }
 #endif

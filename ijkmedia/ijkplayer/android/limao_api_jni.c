@@ -17,7 +17,7 @@
 #include "ijksdl/ijksdl_log.h"
 #include "ijksdl/android/ijksdl_android_jni.h"
 #include "../mediadownloadmodule/mediafile_download_log.h"
-
+//#include "lmp2p.h"
 #define JNI_CLASS_PLAY_MANAGER "com/limaoso/phonevideo/playmanager/PlayManager"
 
 typedef struct limao_api_fields_t {
@@ -80,6 +80,9 @@ static LimaoJniStruct s_limaoJniStruct;
 
 static LimaoJniStruct *p_limaoJniStruct = &s_limaoJniStruct;
 
+int g_isTest= 0;
+
+static int g_quit = 0; //p2p  quit to waitfinsh function
 #if 0
 static void LimaoApi_postMsgToUI(int msgID, int arg1, int arg2, char *str)
 {
@@ -101,6 +104,15 @@ static void LimaoApi_prepareToPlay(JNIEnv *env, jclass clazz, jstring fileHash, 
 	ALOGD("LimaoApi_prepareToPlay: fileHash | filenameExtension | fileSize | startTime = %s %s %lld %lld", c_fileHash, c_filenameExtension, fileSize, startTime);
 	strcpy(param->fileHash, c_fileHash);
 	strcpy(param->filenameExtension, c_filenameExtension);
+	g_quit = 0;
+	if(strcmp(c_filenameExtension,"test") == 0)
+	{
+		g_isTest = 1;
+	}else
+	{
+		g_isTest = 0;
+	}
+
 	param->fileSize = fileSize;
 	param->playRequestTime = curTime;
 
@@ -111,8 +123,14 @@ static void LimaoApi_prepareToPlay(JNIEnv *env, jclass clazz, jstring fileHash, 
 
 	msg_queue_put_simple5(p_limaoJniStruct->msg_queue, LM_MSG_PREPARE_TO_PLAY, param);
 }
-
-void LimaoApi_prepareOK(char *fileHash)
+void LimaoApi_stopP2pDownload(char * fileHash)
+{
+	__android_log_print(ANDROID_LOG_INFO,"ijk","lmk WLimaoApi_stopP2pDownload");
+	g_quit = 1;
+	msg_queue_put_simple1(p_limaoJniStruct->msg_queue, LM_MSG_QUIT_THREAD);
+	StopDownload(fileHash);
+}
+void LimaoApi_prepareOK(char *fileHash, char * filePath)
 {
 //	LimaoApi_postMsgToUI(LM_MSG_PREPARE_OK, NULL, 0, 0);
 
@@ -127,11 +145,15 @@ void LimaoApi_prepareOK(char *fileHash)
 		env = tld->env;
 	}
 
-	jstring str = (*env)->NewStringUTF(env, fileHash);
+	jstring strHash = (*env)->NewStringUTF(env, fileHash);
 
-	(*env)->CallStaticVoidMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_prepareOK, str);
+	jstring strPath = (*env)->NewStringUTF(env, filePath);
 
-	(*env)->DeleteLocalRef(env, str);
+	(*env)->CallStaticVoidMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_prepareOK, strHash, strPath);
+
+	(*env)->DeleteLocalRef(env, strHash);
+
+	(*env)->DeleteLocalRef(env, strPath);
 }
 
 void LimaoApi_bufferingUpdate(char *fileHash, int percent)
@@ -172,22 +194,27 @@ int LimaoApi_download(char *fileHash, int64_t offset, int64_t size)
 		ThreadLocalData_t *tld = pthread_getspecific(key);
 		env = tld->env;
 	}
+    if(g_isTest)
+    {
+    	jstring str = (*env)->NewStringUTF(env, fileHash);
 
-	jstring str = (*env)->NewStringUTF(env, fileHash);
+    	jlong tmp_offset = offset;
+    	jlong tmp_size = size;
+    	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_download, str, tmp_offset, tmp_size);
 
-	jlong tmp_offset = offset;
-	jlong tmp_size = size;
-	//(*env)->CallStaticVoidMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_download, str, offset, size);
-	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_download, str, tmp_offset, tmp_size);
+    	(*env)->DeleteLocalRef(env, str);
 
-	(*env)->DeleteLocalRef(env, str);
+    }else
+    {
 
-	ALOGD("LimaoApi_download: fileHash | offset | size | ret = %s %lld %lld %d", fileHash, offset, size, ret);
+    	ret = Download(fileHash, offset, size);
+    }
+
 
 	return ret;
 }
 
-int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeout)
+int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size,volatile const int *quit, int timeout)
 {
 	int ret = 0;
 
@@ -201,15 +228,24 @@ int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size, int timeo
 		ThreadLocalData_t *tld = pthread_getspecific(key);
 		env = tld->env;
 	}
+    if(g_isTest)
+    {
+    	jstring str = (*env)->NewStringUTF(env, fileHash);
 
-	jstring str = (*env)->NewStringUTF(env, fileHash);
+    	jlong tmp_offset = offset;
+    	jlong tmp_size = size;
+    	//ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, offset, size, timeout);
+    	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, tmp_offset, tmp_size, timeout);
 
-	jlong tmp_offset = offset;
-	jlong tmp_size = size;
-	//ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, offset, size, timeout);
-	ret = (*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_downloadExt, str, tmp_offset, tmp_size, timeout);
+    	(*env)->DeleteLocalRef(env, str);
+    }else
+    {
+    	ret = Download(fileHash, offset, size);
+    	__android_log_print(ANDROID_LOG_INFO,"ijk","lmk Download in offset : %llu, size  : %llu",offset, size);
+    	ret = WaitFinish(fileHash, offset, size, &g_quit,  timeout);
+    	__android_log_print(ANDROID_LOG_INFO,"ijk","lmk WaitFinish in offset : %llu, size  : %llu, ret = %d",offset, size, ret);
+    }
 
-	(*env)->DeleteLocalRef(env, str);
 
 	return ret;
 }
@@ -252,20 +288,24 @@ void LimaoApi_getFilePath(/*IN*/char *fileHash, /*OUT*/char *filePath)
 		ThreadLocalData_t *tld = pthread_getspecific(key);
 		env = tld->env;
 	}
+	if(g_isTest)
+	{
+		jstring strHash = (*env)->NewStringUTF(env, fileHash);
 
-	jstring strHash = (*env)->NewStringUTF(env, fileHash);
+		jstring strPath = (*env)->CallStaticObjectMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_getFilePath, strHash);
 
-	jstring strPath = (*env)->CallStaticObjectMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_getFilePath, strHash);
+		const char * c_filePath = (*env)->GetStringUTFChars(env, strPath, NULL); // _xxx
 
-	const char * c_filePath = (*env)->GetStringUTFChars(env, strPath, NULL); // _xxx
+		memset(filePath, 0, 4);
+		strcpy(filePath, c_filePath);
+		(*env)->ReleaseStringUTFChars(env, strPath, c_filePath);
+		(*env)->DeleteLocalRef(env, strHash);
+		(*env)->DeleteLocalRef(env, strPath);
+	}else
+	{
+		GetFilePath(fileHash, filePath);
+	}
 
-	memset(filePath, 0, 4);
-	strcpy(filePath, c_filePath);
-	ALOGD("LimaoApi_getFilePath: fileHash | filePath = %s %s", fileHash, filePath);
-
-	(*env)->ReleaseStringUTFChars(env, strPath, c_filePath);
-	(*env)->DeleteLocalRef(env, strHash);
-	(*env)->DeleteLocalRef(env, strPath);
 
 }
 
@@ -274,7 +314,7 @@ int64_t LimaoApi_getFileSize(char *fileHash)
 	//int ret = 0;
 
 	JNIEnv *env = NULL;
-
+	int64_t fsize = 0;
 	if (g_env_flag == 1)
 	{
 		env = g_env;
@@ -283,18 +323,32 @@ int64_t LimaoApi_getFileSize(char *fileHash)
 		ThreadLocalData_t *tld = pthread_getspecific(key);
 		env = tld->env;
 	}
+	if(g_isTest)
+	{
+		jstring strHash = (*env)->NewStringUTF(env, fileHash);
 
-	jstring strHash = (*env)->NewStringUTF(env, fileHash);
+		fsize = (*env)->CallStaticLongMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_getFileSize, strHash);
 
-	jlong fsize = (*env)->CallStaticLongMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_getFileSize, strHash);
+		(*env)->DeleteLocalRef(env, strHash);
+	}else
+	{
+		fsize = GetFileSize(fileHash);
+	}
 
-	(*env)->DeleteLocalRef(env, strHash);
 
-	ALOGD("LimaoApi_getFileSize: fileHash | fileSize = %s %lld", fileHash, fsize);
+
 
 	return fsize;
 }
-
+static jint LimaoApi_getP2pDownloadSpeed(JNIEnv *env, jclass clazz, jstring fileHash)
+{
+	jint ret = 100;
+	const char * c_fileHash = (*env)->GetStringUTFChars(env, fileHash, NULL);
+	ret = GetDownloadSpeed((const char*)c_fileHash);
+	__android_log_print(ANDROID_LOG_INFO,"ijk","LimaoApi_getP2pDownloadSpeed: fileHash | speed = %s %d", c_fileHash, ret);
+	(*env)->ReleaseStringUTFChars(env, fileHash, c_fileHash);
+	return ret;
+}
 static void LimaoApi_downloadFinish(JNIEnv *env, jclass clazz, jstring fileHash, jint index)
 {
 	limao_api_param_4_downloadFinish_t *param = malloc(sizeof(limao_api_param_4_downloadFinish_t));
@@ -486,7 +540,9 @@ static JNINativeMethod g_methods[] = {
     { "_native_deinit",         "()V",        (void *) LimaoApi_native_deinit },
 
     { "_prepareToPlay",       "(Ljava/lang/String;Ljava/lang/String;JJJ)V",     (void *) LimaoApi_prepareToPlay },
-    { "_downloadFinish",      "(Ljava/lang/String;I)V",                               (void *) LimaoApi_downloadFinish }
+    { "_stopP2pDownload",     "(Ljava/lang/String;)V",							(void *) LimaoApi_stopP2pDownload },
+    { "_downloadFinish",      "(Ljava/lang/String;I)V",                               (void *) LimaoApi_downloadFinish },
+    { "_getP2pDownloadSpeed", "(Ljava/lang/String;)I",                               (void *) LimaoApi_getP2pDownloadSpeed }
 
 };
 
@@ -503,7 +559,7 @@ int LimaoApi_global_init(JavaVM *jvm, JNIEnv *env)
 //        "postEventFromNative", "(Ljava/lang/Object;IIILjava/lang/Object;)V");
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_prepareOK, g_clazz.clazz,
-        "c2j_prepareOK", "(Ljava/lang/String;)V");
+        "c2j_prepareOK", "(Ljava/lang/String;Ljava/lang/String;)V");
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_bufferingUpdate, g_clazz.clazz,
         "c2j_bufferingUpdate", "(Ljava/lang/String;I)V");

@@ -16,6 +16,7 @@ DownldMediaFile::DownldMediaFile()
 	_medieFileSize = 0;
 	pMediaFileDownldLog = NULL;
 	_downloadBlockInfoList = NULL;
+	_quit =0;
 }
 DownldMediaFile::~DownldMediaFile()
 {
@@ -75,7 +76,7 @@ int DownldMediaFile::P2pDownloadMediaData(long offset, int64_t blockSize)
 						   "DownldMediaFile::P2pDownloadMediaData ",
 						   logbuf,
 						   	pMediaFileDownldLog);
-	int ret =  LimaoApi_downloadExt(_mediaFileHash,offset,blockSize,1000);
+	int ret =  LimaoApi_downloadExt(_mediaFileHash,offset,blockSize,&_quit, 1000);
 	if(ret != 0)
 	{
 		sprintf(logbuf,"offset %ld,  block size %llu  error %d",offset,blockSize,ret);
@@ -91,59 +92,7 @@ int DownldMediaFile::P2pDownloadMediaData(long offset, int64_t blockSize)
 						   	pMediaFileDownldLog);
 	return ret;
 }
-/*bool DownldMediaFile::CopyFileData(long offset, int64_t blockSize)
-{
-	CHECK_POINTER_RET(_pOutFile, false);
-	CHECK_POINTER_RET(_pInFile, false);
-	if (0 != fseek(_pInFile, offset, SEEK_SET))
-	{
-		printf("Download file seek input file failed\n");
-		return false;
-	}
-	if (0 != fseek(_pOutFile, offset, SEEK_SET))
-	{
-		printf("Download file seek output file failed\n");
-		return false;
-	}
 
-
-	int count = blockSize / BUFFERSIZE + 1;
-
-	long lastCountSize = blockSize % BUFFERSIZE;
-
-	for (int i = 0; i < count; i++)
-	{
-		memset(_buffer, 0, BUFFERSIZE);
-		if (i == count - 1)
-		{
-			if (lastCountSize != fread(_buffer, 1, lastCountSize, _pInFile))
-			{
-				printf("Download  file read input file failed\n");
-				return false;
-			}
-			if (lastCountSize != fwrite(_buffer, 1, lastCountSize, _pOutFile))
-			{
-				printf("Download  file write input file failed\n");
-				return false;
-			}
-			break;
-		}
-
-		if (BUFFERSIZE != fread(_buffer, 1, BUFFERSIZE, _pInFile))
-		{
-			printf("Download  file read input file failed\n");
-			return false;
-		}
-		if (BUFFERSIZE != fwrite(_buffer, 1, BUFFERSIZE, _pOutFile))
-		{
-			printf("Download  file write input file failed\n");
-			return false;
-		}
-	}
-	return true;
-
-
-}*/
 
 char * DownldMediaFile::GetP2pDownloadFileNameHash()
 {

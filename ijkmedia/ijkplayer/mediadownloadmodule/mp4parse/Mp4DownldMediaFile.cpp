@@ -56,6 +56,7 @@ int Mp4DownldMediaFile:: Finish()
 						   "delete the list memory\n",
 						   	pMediaFileDownldLog);
 	}
+	pMediaFileDownldLog = NULL;
 	return 1;
 }
 int Mp4DownldMediaFile::Mp4CheckBoxType( char* buf)
@@ -88,7 +89,7 @@ int Mp4DownldMediaFile::Mp4CheckBoxType( char* buf)
 		return MOOF;
 	}
 	else{
-		return -1;
+		return FREE;
 	}
 
 }
