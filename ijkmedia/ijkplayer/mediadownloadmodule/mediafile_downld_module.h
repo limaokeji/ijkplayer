@@ -41,7 +41,7 @@ extern "C" {
  * @param filesize   the media file size
  */
 void * mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, char * play_mediefile_path, uint64_t filesize,
-									DOWNLOADBLOCKINFO ** pdownload_blockinfo_list, FILE** plog_file);
+									DOWNLOADBLOCKINFO ** pdownload_blockinfo_list, FILE* plog_file);
 
 /**
  * finish

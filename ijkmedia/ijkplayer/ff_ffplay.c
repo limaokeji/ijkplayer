@@ -2347,7 +2347,7 @@ static int read_thread(void *arg)
     FILE * pfile = mediafile_downld_module_getlogfile(NULL);
     char logbuf[200] = {0};
 	sprintf(logbuf,"read_thread init, time stamp %llu",g_timestamp);
-	printf_log(LOG_ERROR|LOG_FILE,
+	printf_log(LOG_WARN|LOG_FILE,
 			   "ijkplayer",
 			   logbuf,
 			   pfile);

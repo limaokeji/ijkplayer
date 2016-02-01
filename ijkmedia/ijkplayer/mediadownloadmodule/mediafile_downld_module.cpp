@@ -128,7 +128,7 @@ DownldMediaFile * get_downld_mediafile(int file_type)
 	return NULL;
 }
 
-int check_media_type_for_file_data(char * hash_name,FILE ** plog_file);
+int check_media_type_for_file_data(char * hash_name,FILE * plog_file);
 
 /**
  * init
@@ -137,27 +137,25 @@ int check_media_type_for_file_data(char * hash_name,FILE ** plog_file);
  * @param filesize   the media file size
  */
 void * mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, char * play_mediefile_path, uint64_t filesize,
-									DOWNLOADBLOCKINFO ** pdownload_blockinfo_list, FILE** p_plog_file)
+									DOWNLOADBLOCKINFO ** pdownload_blockinfo_list, FILE* p_plog_file)
 {
-	FILE * plog_file = *p_plog_file;
 	if(mediafile_hash == NULL)
 	{
-		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+		printf_log(LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
 				   "the arg mediafile hash string is invalid.\n",
-				   plog_file);
+				   p_plog_file);
 	}
 	if(suffix_name == NULL)
 	{
-		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+		printf_log(LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
 				   "the arg suffix name is invalid.\n",
-				   plog_file);
+				   p_plog_file);
 	}
 
 
 	int tmp_media_type = check_media_type_for_file_data(mediafile_hash,p_plog_file);
-	plog_file = *p_plog_file;
 	int media_type = -1;
 	if(tmp_media_type != -1)
 	{
@@ -170,10 +168,10 @@ void * mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, ch
 
 	if(tmp_media_type == -1)
 	{
-		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+		printf_log(LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
 				   "check media type for file data failed.",
-				   plog_file);
+				   p_plog_file);
 		return NULL;
 	}
 	DownldMediaFile * g_downld_mediafile;
@@ -181,29 +179,23 @@ void * mediafile_downld_module_init(char * mediafile_hash,char * suffix_name, ch
 	g_downld_mediafile = get_downld_mediafile(tmp_media_type);
 	if(NULL == g_downld_mediafile)
 	{
-		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+		printf_log(LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
 				   "the media file  type is Not Support.\n",
-				   plog_file);
+				   p_plog_file);
 		return NULL;
 	}
 
 	tmp_mediafile = g_downld_mediafile;
 
-	if(plog_file == NULL)
-	{
-		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
-				   "mediafile downld module init",
-				   "plog _ file  is NULL\n",
-				   plog_file);
-	}
 
-	if(!g_downld_mediafile->Init(mediafile_hash, suffix_name, play_mediefile_path, filesize,plog_file))
+
+	if(!g_downld_mediafile->Init(mediafile_hash, suffix_name, play_mediefile_path, filesize,p_plog_file))
 	{
-		printf_log(plog_file == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
+		printf_log(LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
 				   "g_downld_mediafile init failed.\n",
-				   plog_file);
+				   p_plog_file);
 		return NULL;
 	}
 
@@ -301,38 +293,38 @@ char * mediafile_downld_module_download_mediafilepath(void * g_downld_mediafile)
 		return false;
 	return ((DownldMediaFile *)g_downld_mediafile)->GetPlayFileNamePath();
 }
-int check_media_type_for_file_data(char * hash_name,FILE ** plog_file)
+int check_media_type_for_file_data(char * hash_name,FILE * plog_file)
 {
 	int loop = 2;
 	if(hash_name == NULL)
 	{
-		printf_log(LOG_ERROR,
+		printf_log(LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
 				   "hash name is invalid.",
-				   NULL);
+				   plog_file);
 		return -1;
 	}
 
-	printf_log(LOG_INFO,
+	printf_log(LOG_INFO|LOG_FILE,
 			"mediafile downld module init",
 			"check_media_type_for_file_data p2p download  100*1024 data\n",
-			NULL);
+			plog_file);
 	int quit = 0;
 	int ret =  LimaoApi_download(hash_name,0,100*1024);
 	if(ret != 0)
 	{
-		printf_log(LOG_ERROR,
+		printf_log(LOG_ERROR|LOG_FILE,
 				"mediafile downld module init",
 				"check_media_type_for_file_data send download order 100*1024 data\n",
-				NULL);
+				plog_file);
 	}
 	ret =  LimaoApi_downloadExt(hash_name,0,100*1024,&quit, 1000);
 	while(ret != 0 && loop >0)
 	{
-		printf_log(LOG_ERROR,
+		printf_log(LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
 				   "download  100*1024 data failed  and Tay agine\n",
-				   NULL);
+				   plog_file);
 		sleep(1);
 /*		if(loop % 2 == 1)
 		{
@@ -347,24 +339,24 @@ int check_media_type_for_file_data(char * hash_name,FILE ** plog_file)
 	{
 		return -1;
 	}
-	printf_log(LOG_INFO,
+	printf_log(LOG_INFO|LOG_FILE,
 			"mediafile downld module init",
 			"check_media_type_for_file_data p2p download  100*1024 data complete\n",
-			NULL);
+			plog_file);
 
 	char  local_file_name[256] = {0};
 	LimaoApi_getFilePath(hash_name, local_file_name);
 	if(local_file_name[0] == 0)
 	{
-		printf_log(LOG_ERROR,
+		printf_log(LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
 				   "check_media_type_for_file_data get file path failed .\n",
-				   NULL);
+				   plog_file);
 		return -1;
 	}
-	if(*plog_file == NULL)
+	if(plog_file == NULL)
 	{
-		for(int i = strlen(local_file_name)-1;i>1; i--)
+		/*for(int i = strlen(local_file_name)-1;i>1; i--)
 		{
 			if(local_file_name[i] == '.')
 			{
@@ -387,7 +379,7 @@ int check_media_type_for_file_data(char * hash_name,FILE ** plog_file)
 				local_file_name[i+1] = ch;
 				break;
 			}
-		}
+		}*/
 	}
 	FILE * pFile = fopen(local_file_name,"rb");
 	if(pFile == NULL)
@@ -395,7 +387,7 @@ int check_media_type_for_file_data(char * hash_name,FILE ** plog_file)
 		printf_log(LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init open local file failed.",
 				   local_file_name,
-				   *plog_file);
+				   plog_file);
 		return -1;
 	}
 	unsigned char readBuf[100] = {0};
@@ -406,7 +398,7 @@ int check_media_type_for_file_data(char * hash_name,FILE ** plog_file)
 		printf_log(LOG_ERROR|LOG_FILE,
 				   "mediafile downld module init",
 				   "check_media_type_for_file_data fread file failed .\n",
-				   *plog_file);
+				   plog_file);
 		fclose(pFile);
 		pFile = NULL;
 		return -1;
@@ -418,7 +410,7 @@ int check_media_type_for_file_data(char * hash_name,FILE ** plog_file)
 		printf_log(LOG_INFO|LOG_FILE,
 				   "mediafile downld module init",
 				   "check_media_type_for_file_data  check MP4\n",
-				   *plog_file);
+				   plog_file);
 		fclose(pFile);
 		pFile = NULL;
 		return MP4;
@@ -427,7 +419,7 @@ int check_media_type_for_file_data(char * hash_name,FILE ** plog_file)
 		printf_log(LOG_INFO|LOG_FILE,
 				   "mediafile downld module init",
 				   "check_media_type_for_file_data  check RMVB\n",
-				   *plog_file);
+				   plog_file);
 		fclose(pFile);
 		pFile = NULL;
 		return RMVB;
@@ -435,7 +427,7 @@ int check_media_type_for_file_data(char * hash_name,FILE ** plog_file)
 		printf_log(LOG_INFO|LOG_FILE,
 				   "mediafile downld module init",
 				   "check_media_type_for_file_data  check MKV\n",
-				   *plog_file);
+				   plog_file);
 		fclose(pFile);
 		pFile = NULL;
 		return MKV;
@@ -443,6 +435,6 @@ int check_media_type_for_file_data(char * hash_name,FILE ** plog_file)
 	printf_log(LOG_INFO|LOG_FILE,
 			   "mediafile downld module init",
 			   "check_media_type_for_file_data  not check file type\n",
-			   *plog_file);
+			   plog_file);
 	return -1;
 }

@@ -33,6 +33,7 @@ typedef struct limao_api_fields_t {
 	jmethodID jmid_c2j_getFileSize;
 	jmethodID jmid_c2j_hasEnoughMemory;
 	jmethodID jmid_c2j_notifyNotEnoughMemory;
+	jmethodID jmid_c2j_p2pDownloadFailed;
 
 	jmethodID jmid_c2j_MQ_map_add;
 	jmethodID jmid_c2j_MQ_map_remove;
@@ -82,7 +83,11 @@ static LimaoJniStruct *p_limaoJniStruct = &s_limaoJniStruct;
 
 int g_isTest= 0;
 
+
+int g_offset = 0;
+int g_blocksize = 0;
 static int g_quit = 0; //p2p  quit to waitfinsh function
+FILE * log_File = NULL;
 #if 0
 static void LimaoApi_postMsgToUI(int msgID, int arg1, int arg2, char *str)
 {
@@ -104,6 +109,7 @@ static void LimaoApi_prepareToPlay(JNIEnv *env, jclass clazz, jstring fileHash, 
 	ALOGD("LimaoApi_prepareToPlay: fileHash | filenameExtension | fileSize | startTime = %s %s %lld %lld", c_fileHash, c_filenameExtension, fileSize, startTime);
 	strcpy(param->fileHash, c_fileHash);
 	strcpy(param->filenameExtension, c_filenameExtension);
+	param->logFile = log_File;
 	g_quit = 0;
 	if(strcmp(c_filenameExtension,"test") == 0)
 	{
@@ -122,6 +128,9 @@ static void LimaoApi_prepareToPlay(JNIEnv *env, jclass clazz, jstring fileHash, 
 	(*env)->ReleaseStringUTFChars(env, filenameExtension, c_filenameExtension);
 
 	msg_queue_put_simple5(p_limaoJniStruct->msg_queue, LM_MSG_PREPARE_TO_PLAY, param);
+
+	g_offset = 0;
+	g_blocksize = 0;
 }
 void LimaoApi_stopP2pDownload(char * fileHash)
 {
@@ -129,6 +138,8 @@ void LimaoApi_stopP2pDownload(char * fileHash)
 	g_quit = 1;
 	msg_queue_put_simple1(p_limaoJniStruct->msg_queue, LM_MSG_QUIT_THREAD);
 	StopDownload(fileHash);
+	g_offset = 0;
+	g_blocksize = 0;
 }
 void LimaoApi_prepareOK(char *fileHash, char * filePath)
 {
@@ -154,6 +165,8 @@ void LimaoApi_prepareOK(char *fileHash, char * filePath)
 	(*env)->DeleteLocalRef(env, strHash);
 
 	(*env)->DeleteLocalRef(env, strPath);
+
+
 }
 
 void LimaoApi_bufferingUpdate(char *fileHash, int percent)
@@ -208,6 +221,10 @@ int LimaoApi_download(char *fileHash, int64_t offset, int64_t size)
     {
 
     	ret = Download(fileHash, offset, size);
+    	if(ret != 0)
+    	{
+    		(*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_p2pDownloadFailed, 0);
+    	}
     }
 
 
@@ -240,10 +257,25 @@ int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size,volatile c
     	(*env)->DeleteLocalRef(env, str);
     }else
     {
-    	ret = Download(fileHash, offset, size);
-    	__android_log_print(ANDROID_LOG_INFO,"ijk","lmk Download in offset : %llu, size  : %llu",offset, size);
+
+    	if ((g_offset > offset) || (g_offset + g_blocksize < offset+ size))  // 查询过界，发送下载命令
+    	{
+    		ret = Download(fileHash, offset, size);
+    		__android_log_print(ANDROID_LOG_INFO,"ijk","lmk Download in offset : %llu, size  : %llu",offset, size);
+    		if(ret != 0)
+    		{
+    			__android_log_print(ANDROID_LOG_ERROR,"ijk","lmk Download in offset : %llu, size  : %llu",offset, size);
+    			(*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_p2pDownloadFailed, 0);
+    			return -1;
+    		}
+    	}
+
     	ret = WaitFinish(fileHash, offset, size, &g_quit,  timeout);
-    	__android_log_print(ANDROID_LOG_INFO,"ijk","lmk WaitFinish in offset : %llu, size  : %llu, ret = %d",offset, size, ret);
+    	__android_log_print(ANDROID_LOG_INFO,"ijk","lmk WaitFinish in offset :quit = %d,  %llu, size  : %llu, ret = %d",g_quit,offset, size, ret);
+    	if(ret != 0)
+    	{
+    		(*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_p2pDownloadFailed, g_quit==1 ? 1 : 0);
+    	}
     }
 
 
@@ -522,15 +554,20 @@ static void LimaoApi_native_init(JNIEnv *env)
 {
     //int ret = 0;
 
-	ALOGD("LimaoApi_native_init()");
-
+	__android_log_print(ANDROID_LOG_INFO,"log file open","lmk LimaoApi_native_init()");
+	log_File  = fopen("/sdcard/limao/player.log","w+");
 	createThread();
 
 }
 
 static void LimaoApi_native_deinit(JNIEnv *env)
 {
-	ALOGD("LimaoApi_native_deinit()");
+	__android_log_print(ANDROID_LOG_INFO,"log file open","lmk LimaoApi_native_deinit()");
+	if(log_File)
+	{
+		fclose(log_File);
+		log_File = NULL;
+	}
 }
 
 static JNINativeMethod g_methods[] = {
@@ -584,6 +621,10 @@ int LimaoApi_global_init(JavaVM *jvm, JNIEnv *env)
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_notifyNotEnoughMemory, g_clazz.clazz,
         "c2j_notifyNotEnoughMemory", "(Ljava/lang/String;J)V");
+
+    IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_p2pDownloadFailed, g_clazz.clazz,
+        "c2j_p2pDownloadFailed", "(I)V");
+
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_MQ_map_add, g_clazz.clazz,
         "c2j_MQ_map_add", "(JJ)V");

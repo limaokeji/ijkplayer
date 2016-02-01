@@ -117,15 +117,6 @@ static void message_loop_x(ThreadLocalData_t *pData)
     			   g_mediafile_parse_log);
         	mediafile_downld_module_finish(g_downld_mediafile);
 
-    		if(g_mediafile_parse_log != NULL)
-    		{
-    			fclose(g_mediafile_parse_log);
-    			g_mediafile_parse_log = NULL;
-				printf_log(LOG_INFO,
-						   "mediafile downld module finish",
-						   "fclose.",
-						   NULL);
-    		}
     		break;
     	}
 
@@ -152,22 +143,22 @@ static void message_loop_x(ThreadLocalData_t *pData)
         	param = msg.data;
         	mediafile_hash = param->fileHash;
         	suffix_name = param->filenameExtension;
-
+        	g_mediafile_parse_log = param->logFile;
 			LimaoApi_bufferingUpdate(mediafile_hash, 0);
 
-        	printf_log(LOG_WARN,
+        	printf_log(LOG_WARN|LOG_FILE,
         			mediafile_hash,
         			suffix_name,
-                	NULL);
+        			g_mediafile_parse_log);
         	g_downld_mediafile = mediafile_downld_module_init(mediafile_hash, suffix_name, NULL, 0,
-        			&g_pdownload_blockinfo_list, &g_mediafile_parse_log);
+        			&g_pdownload_blockinfo_list, g_mediafile_parse_log);
         	if(g_downld_mediafile == NULL)
         	{
         		printf_log(LOG_ERROR | LOG_FILE,
         			   "ijkplayer media file download medule thread",
         			   "mediafile download module init failed.",
         			   g_mediafile_parse_log);
-        		quit =1;
+        		//quit =1;
         		break;
 
         	}
@@ -195,7 +186,7 @@ static void message_loop_x(ThreadLocalData_t *pData)
         			   "ijkplayer media file download medule thread",
         			   "mediafile download module get root box offset failed.\n",
         			   	g_mediafile_parse_log);
-        		quit =1;
+        		//quit =1;
 
 
         		break;
@@ -212,7 +203,7 @@ static void message_loop_x(ThreadLocalData_t *pData)
         			   "ijkplayer media file download medule thread",
         			   "mediafile download module get play info box failed.\n",
         			   g_mediafile_parse_log);
-        		quit =1;
+        		//quit =1;
 
 
         		break;
@@ -227,7 +218,7 @@ static void message_loop_x(ThreadLocalData_t *pData)
 					   "ijkplayer media file download medule thread",
 					   "mediafile download block failed --- 0.",
 					   g_mediafile_parse_log);
-				quit =1;
+				//quit =1;
 				break;
 
 
@@ -239,7 +230,7 @@ static void message_loop_x(ThreadLocalData_t *pData)
 					   "ijkplayer media file download medule thread",
 					   "mediafile download block failed --- 1.\n",
 					   g_mediafile_parse_log);
-				quit =1;
+				//quit =1;
 				break;
 
 			}
@@ -250,7 +241,7 @@ static void message_loop_x(ThreadLocalData_t *pData)
 					   "ijkplayer media file download medule thread",
 					   "mediafile download block failed --- 2.\n",
 					   g_mediafile_parse_log);
-				quit =1;
+				//quit =1;
 				break;
 			}
 			LimaoApi_bufferingUpdate(mediafile_hash, 90);
@@ -275,6 +266,15 @@ static void message_loop_x(ThreadLocalData_t *pData)
 					   g_mediafile_parse_log);
 				break;
         	}
+        	if(block_index == block_count)
+			{
+				printf_log(LOG_WARN|LOG_FILE,
+					   "ijkplayer media file download medule thread",
+					   "mediafile download complete.",
+					   g_mediafile_parse_log);
+				break;
+			}
+
         	if(!mediafile_downld_module_download_mediadatablock(g_downld_mediafile,block_index))
         	{
 				printf_log(LOG_ERROR|LOG_FILE,
@@ -282,9 +282,9 @@ static void message_loop_x(ThreadLocalData_t *pData)
 					   "mediafile download block failed.\n",
 					   g_mediafile_parse_log);
 
-				quit =1;
+				//quit =1;
 
-				msg_queue_put_simple1(msg_queue, LM_MSG_QUIT_THREAD);
+				//msg_queue_put_simple1(msg_queue, LM_MSG_QUIT_THREAD);
 				break;
 
         	}
@@ -293,12 +293,6 @@ static void message_loop_x(ThreadLocalData_t *pData)
         	{
         		msg_queue_put_simple2(msg_queue, LM_MSG_P2P_DOWNLOAD_BLOCK, block_index+1);
 
-        	}else if(block_index == block_count)
-        	{
-				printf_log(LOG_INFO|LOG_FILE,
-					   "ijkplayer media file download medule thread",
-					   "mediafile download complete.",
-					   g_mediafile_parse_log);
         	}
         	break;
 
@@ -324,10 +318,10 @@ static void message_loop_x(ThreadLocalData_t *pData)
 			{
 				printf_log(LOG_ERROR|LOG_FILE,
 					   "ijkplayer media file download medule thread",
-					   "download_blockinfo_list is invalid.\n",
+					   "download_blockinfo_list is invalid",
 					   g_mediafile_parse_log);
 
-				quit =1;
+				//quit =1;
 				break;
 			}
 			block_index = block_index -1;
@@ -345,9 +339,9 @@ static void message_loop_x(ThreadLocalData_t *pData)
 			{
 				printf_log(LOG_ERROR|LOG_FILE,
 					   "ijkplayer media file download medule thread",
-					   "mediafile download block failed.\n",
+					   "mediafile download block failed",
 					   g_mediafile_parse_log);
-				quit =1;
+				//quit =1;
 				break;
 
 			}
@@ -360,7 +354,7 @@ static void message_loop_x(ThreadLocalData_t *pData)
 			{
 				printf_log(LOG_INFO|LOG_FILE,
 					   "ijkplayer media file download medule thread",
-					   "mediafile download complete.\n",
+					   "mediafile download complete",
 					   g_mediafile_parse_log);
 			}
 
@@ -428,7 +422,7 @@ static void message_loop_M(JNIEnv *env)
             
             strcpy(newParam->fileHash, param->fileHash);
 			strcpy(newParam->filenameExtension, param->filenameExtension);
-
+			newParam->logFile = param->logFile;
 			msg_queue_put_simple5(threadLocalData->msg_queue, LM_MSG_PREPARE_TO_PLAY, newParam);
             
             break;

@@ -40,6 +40,7 @@ extern "C" {
 typedef struct {
 	char fileHash[100 + 4];
 	char filenameExtension[8 + 4];
+	FILE * logFile;
 	int64_t fileSize;
 	int64_t playRequestTime;
 } limao_api_param_4_prepareToPlay_t;
