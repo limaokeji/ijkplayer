@@ -111,6 +111,8 @@ static void LimaoApi_prepareToPlay(JNIEnv *env, jclass clazz, jstring fileHash, 
 	strcpy(param->filenameExtension, c_filenameExtension);
 	param->logFile = log_File;
 	g_quit = 0;
+	param->p2pQuit = &g_quit;
+
 	if(strcmp(c_filenameExtension,"test") == 0)
 	{
 		g_isTest = 1;
@@ -132,19 +134,27 @@ static void LimaoApi_prepareToPlay(JNIEnv *env, jclass clazz, jstring fileHash, 
 	g_offset = 0;
 	g_blocksize = 0;
 }
-void LimaoApi_stopP2pDownload(char * fileHash)
+void LimaoApi_stopP2pDownload(JNIEnv *env, jclass clazz,jstring strfileHash)
 {
-	__android_log_print(ANDROID_LOG_INFO,"ijk","lmk WLimaoApi_stopP2pDownload");
+	printf_log(LOG_WARN|LOG_FILE,"ijk","lmk WLimaoApi_stopP2pDownload",log_File);
 	g_quit = 1;
 	msg_queue_put_simple1(p_limaoJniStruct->msg_queue, LM_MSG_QUIT_THREAD);
-	StopDownload(fileHash);
+
+	const char * c_fileHash = (*env)->GetStringUTFChars(env, strfileHash, NULL);
+
+	if(0 != StopDownload(c_fileHash))
+	{
+		printf_log(LOG_ERROR|LOG_FILE,c_fileHash,"lmk StopDownload ERROR",log_File);
+	}else
+	{
+		printf_log(LOG_ERROR|LOG_FILE,c_fileHash,"lmk StopDownload SUCCESS",log_File);
+	}
+	(*env)->ReleaseStringUTFChars(env, strfileHash, c_fileHash);
 	g_offset = 0;
 	g_blocksize = 0;
 }
 void LimaoApi_prepareOK(char *fileHash, char * filePath)
 {
-//	LimaoApi_postMsgToUI(LM_MSG_PREPARE_OK, NULL, 0, 0);
-
 	JNIEnv *env = NULL;
 
 	if (g_env_flag == 1)
@@ -219,11 +229,19 @@ int LimaoApi_download(char *fileHash, int64_t offset, int64_t size)
 
     }else
     {
-
+    	char logbuf[300] = {0};
     	ret = Download(fileHash, offset, size);
+		sprintf(logbuf,"Download in offset : %llu, size  : %llu",offset, size);
+		printf_log(LOG_WARN|LOG_FILE,"ijk",logbuf,log_File);
+
+    	g_offset = offset;
+    	g_blocksize = size;
     	if(ret != 0)
     	{
-    		(*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_p2pDownloadFailed, 0);
+    		jstring str = (*env)->NewStringUTF(env, fileHash);
+    		jlong fileSize = GetFileSize(fileHash);
+    		(*env)->CallStaticVoidMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_p2pDownloadFailed,str, 0, fileSize);
+    		(*env)->DeleteLocalRef(env, str);
     	}
     }
 
@@ -237,6 +255,7 @@ int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size,volatile c
 
 	JNIEnv *env = NULL;
 
+	char logbuf[300] = {0};
 	if (g_env_flag == 1)
 	{
 		env = g_env;
@@ -261,20 +280,29 @@ int LimaoApi_downloadExt(char *fileHash, int64_t offset, int64_t size,volatile c
     	if ((g_offset > offset) || (g_offset + g_blocksize < offset+ size))  // 查询过界，发送下载命令
     	{
     		ret = Download(fileHash, offset, size);
-    		__android_log_print(ANDROID_LOG_INFO,"ijk","lmk Download in offset : %llu, size  : %llu",offset, size);
+    		sprintf(logbuf,"LimaoApi_downloadExt no seed download order , download : %llu, size  : %llu",offset, size);
+    		printf_log(LOG_WARN|LOG_FILE,"ijk",logbuf,log_File);
     		if(ret != 0)
     		{
-    			__android_log_print(ANDROID_LOG_ERROR,"ijk","lmk Download in offset : %llu, size  : %llu",offset, size);
-    			(*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_p2pDownloadFailed, 0);
+        		sprintf(logbuf,"Download in offset : %llu, size  : %llu failed",offset, size);
+        		printf_log(LOG_ERROR|LOG_FILE,"ijk",logbuf,log_File);
+        		jstring str = (*env)->NewStringUTF(env, fileHash);
+        		jlong fileSize = GetFileSize(fileHash);
+        		(*env)->CallStaticVoidMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_p2pDownloadFailed,str, 0, fileSize);
+        		(*env)->DeleteLocalRef(env, str);
     			return -1;
     		}
     	}
 
     	ret = WaitFinish(fileHash, offset, size, &g_quit,  timeout);
-    	__android_log_print(ANDROID_LOG_INFO,"ijk","lmk WaitFinish in offset :quit = %d,  %llu, size  : %llu, ret = %d",g_quit,offset, size, ret);
+    	//sprintf(logbuf,"WaitFinish in offset :quit = %d,  %llu, size  : %llu, ret = %d",g_quit,offset, size, ret);
+    	//printf_log(LOG_ERROR|LOG_FILE,"ijk",logbuf,log_File);
     	if(ret != 0)
     	{
-    		(*env)->CallStaticIntMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_p2pDownloadFailed, g_quit==1 ? 1 : 0);
+    		jstring str = (*env)->NewStringUTF(env, fileHash);
+    		jlong fileSize = GetFileSize(fileHash);
+    		(*env)->CallStaticVoidMethod(env, g_clazz.clazz, g_clazz.jmid_c2j_p2pDownloadFailed,str, g_quit==1 ? 1 : 0, fileSize);
+    		(*env)->DeleteLocalRef(env, str);
     	}
     }
 
@@ -375,9 +403,14 @@ int64_t LimaoApi_getFileSize(char *fileHash)
 static jint LimaoApi_getP2pDownloadSpeed(JNIEnv *env, jclass clazz, jstring fileHash)
 {
 	jint ret = 100;
+	char logbuf[300] ={0};
 	const char * c_fileHash = (*env)->GetStringUTFChars(env, fileHash, NULL);
 	ret = GetDownloadSpeed((const char*)c_fileHash);
-	__android_log_print(ANDROID_LOG_INFO,"ijk","LimaoApi_getP2pDownloadSpeed: fileHash | speed = %s %d", c_fileHash, ret);
+	/*sprintf(logbuf,"LimaoApi_getP2pDownloadSpeed: fileHash | speed = %s %d", c_fileHash, ret);
+	printf_log(LOG_INFO|LOG_FILE,
+			   "ijk",
+			   logbuf,
+			   log_File);*/
 	(*env)->ReleaseStringUTFChars(env, fileHash, c_fileHash);
 	return ret;
 }
@@ -554,7 +587,7 @@ static void LimaoApi_native_init(JNIEnv *env)
 {
     //int ret = 0;
 
-	__android_log_print(ANDROID_LOG_INFO,"log file open","lmk LimaoApi_native_init()");
+	printf_log(LOG_INFO|LOG_FILE,"ijk","LimaoApi_native_init open log file /sdcard/limao/player.log",NULL);
 	log_File  = fopen("/sdcard/limao/player.log","w+");
 	createThread();
 
@@ -562,7 +595,7 @@ static void LimaoApi_native_init(JNIEnv *env)
 
 static void LimaoApi_native_deinit(JNIEnv *env)
 {
-	__android_log_print(ANDROID_LOG_INFO,"log file open","lmk LimaoApi_native_deinit()");
+	printf_log(LOG_INFO|LOG_FILE,"ijk","LimaoApi_native_deinit close log file /sdcard/limao/player.log",log_File);
 	if(log_File)
 	{
 		fclose(log_File);
@@ -623,7 +656,7 @@ int LimaoApi_global_init(JavaVM *jvm, JNIEnv *env)
         "c2j_notifyNotEnoughMemory", "(Ljava/lang/String;J)V");
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_p2pDownloadFailed, g_clazz.clazz,
-        "c2j_p2pDownloadFailed", "(I)V");
+        "c2j_p2pDownloadFailed", "(Ljava/lang/String;IJ)V");
 
 
     IJK_FIND_JAVA_STATIC_METHOD(env, g_clazz.jmid_c2j_MQ_map_add, g_clazz.clazz,

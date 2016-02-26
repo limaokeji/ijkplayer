@@ -43,6 +43,7 @@ typedef struct {
 	FILE * logFile;
 	int64_t fileSize;
 	int64_t playRequestTime;
+	int * p2pQuit;
 } limao_api_param_4_prepareToPlay_t;
 
 typedef struct {

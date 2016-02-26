@@ -1,4 +1,5 @@
 #include "mediafile_download_log.h"
+#define PRINTFLOG    1
 /*
 #define   LOG_ALL		127   //yes all
 #define   LOG_INFO		2   // yes
@@ -9,20 +10,26 @@
 int printf_log(int flags ,const char * location,const char * format,FILE * log_file){
 	if((location == NULL) ||(format== NULL))
 	{
+#ifdef PRINTFLOG
 		 __android_log_print(ANDROID_LOG_ERROR,"lmk media file download", "printf_log arg is invalid");
-		return -1;
+#endif
+		 return -1;
 	}
 	if(flags & LOG_INFO )
 	{
+#ifdef PRINTFLOG
 		 __android_log_print(ANDROID_LOG_INFO,"lmk media file download", "lmk %s   |   %s ",location,format);
-		if((flags & LOG_FILE) && (log_file != 0))
+#endif
+		 if((flags & LOG_FILE) && (log_file != 0))
 		{
 			fprintf(log_file,"------> INFO: %s , %s\n",location,format);
 		}
 	}
 	if(flags & LOG_WARN)
 	{
+#ifdef PRINTFLOG
 		__android_log_print(ANDROID_LOG_WARN,"lmk media file download", "lmk %s   |   %s ",location,format);
+#endif
 		if((flags & LOG_FILE) && (log_file != 0))
 		{
 			fprintf(log_file,"????????  WARN: %s , %s\n",location,format);
@@ -30,7 +37,9 @@ int printf_log(int flags ,const char * location,const char * format,FILE * log_f
 	}
 	if(flags & LOG_ERROR)
 	{
+#ifdef PRINTFLOG
 		__android_log_print(ANDROID_LOG_ERROR,"lmk media file download", "lmk %s   |   %s ",location,format);
+#endif
 		if((flags & LOG_FILE) && (log_file != 0))
 		{
 			fprintf(log_file,"!!!!!!!!!  ERROR :%s , %s\n",location,format);

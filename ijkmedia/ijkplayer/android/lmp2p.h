@@ -29,19 +29,32 @@ typedef struct _DownloadFileInfo
     char     filepath[1024]; //if filepath is NULL, reset to ""
 } DownloadFileInfo;
 
+// P2P error code
+const int P2P_ERRNO_SUCCESS          = 0;     //operation ok
+const int P2P_ERRNO_ERROR            = -1;    //general error
+const int P2P_ERRNO_INVALID_PARAM    = -101;  //pointer is null, etc
+const int P2P_ERRNO_INVALID_URI      = -102;  //wrong hash format
+const int P2P_ERRNO_CONNECT_FAIL     = -103;  //socket connect fail
+const int P2P_ERRNO_SOCKET_ERROR     = -104;  //socket exception
+const int P2P_ERRNO_SOCKET_TIMEOUT   = -105;  //socket send, recv timeout
+const int P2P_ERRNO_FILE_NOT_FOUND   = -106;
+const int P2P_ERRNO_DOWNLOAD_TIMEOUT = -107;  //waitfinish timeout
+const int P2P_ERRNO_MEMORY_SHORT     = -108;  //disk memory is not enough
+
 // API defination for P2PControl begin
 /**
  * @param uri magnet or ed2k
  * @param file_path the file path result, the caller should allocate the memory and free it
+ * @param return 0 for success, failed otherwise
  */
-LMP2P_API void GetFilePath(const char* uri, char* file_path);
+LMP2P_API int GetFilePath(const char* uri, char* file_path);
 
 /**
  * Get the file size
  * @param uri magnet or ed2k
- * @return if > 0, file exists, if == 0, file does not exist or other exceptions
+ * @return >=0 for success, failed otherwise
  */
-LMP2P_API uint64_t GetFileSize(const char* uri);
+LMP2P_API int64_t GetFileSize(const char* uri);
 
 /**
  * Download specified file by uri, if offset == 0 & size == 0, download whole file.

@@ -2286,8 +2286,7 @@ void send_download_req(FFPlayer *ffp, int index)
 
 		MessageQueue *msg_queue = LimaoApi_MQ_map_get(ffp->playRequestTime);
 		if (msg_queue == NULL) {
-			__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek send_download_req: msg_queue == NULL");
-
+			printf_log(LOG_WARN,"lmk test","lmk seek send_download_req: msg_queue == NULL",NULL);
 			return;
 		}
 
@@ -2303,11 +2302,10 @@ void send_download_req(FFPlayer *ffp, int index)
 				   "ijkplayer",
 				   logbuf,
 				   pfile);
-		//__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek send_download_req index %d", index);
 		curReqBlockIndex = index;
 	}
 }
-int is_log_time_stamp = 1;
+int is_log_time_stamp = 0;
 FILE * pTimeStampFileLog = NULL;
 /* this thread gets the stream from the disk or the network */
 static int read_thread(void *arg)
@@ -2571,10 +2569,10 @@ static int read_thread(void *arg)
     {
     	keyframe_time_interval = (download_blockinfo_list+11)->timeStamp -  (download_blockinfo_list+10)->timeStamp;
     	keyframe_time_interval = keyframe_time_interval *2;
-        __android_log_print(ANDROID_LOG_WARN,"lmk test","lmk read thread keyframe_time_interval : %llu",keyframe_time_interval);
+        printf_log(LOG_WARN,"lmk test","lmk read thread keyframe_time_interval : %llu",NULL);
     }else
     {
-    	__android_log_print(ANDROID_LOG_ERROR,"lmk test","lmk read thread keyframe_time_interval erroe");
+    	 printf_log(LOG_ERROR,"lmk test","lmk read thread keyframe_time_interval erroe",NULL);
     }
 
 
@@ -2616,8 +2614,6 @@ static int read_thread(void *arg)
 					   "ijkplayer",
 					   logbuf,
 					   pfile);
-           // __android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek req: seek target is %llu, time stamp %llu", seek_target,timestamp);
-
             one_second_timestamp = 0;
             if (!isBlockDownload(timestamp + one_second_timestamp)) // FIXME
 			{
@@ -2626,8 +2622,6 @@ static int read_thread(void *arg)
     					   "ijkplayer",
     					   "lmk seek is not BlockDownload send_download_req",
     					   pfile);
-            	//__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek is not BlockDownload send_download_req");
-
 				send_download_req(ffp, timestamp_2_blockIndex(timestamp + one_second_timestamp));
 				if(ffp->is->pause_req == 0)
 				{
@@ -2646,8 +2640,6 @@ static int read_thread(void *arg)
 						   "ijkplayer",
 						   logbuf,
 						   pfile);
-				//__android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek to time  is not download, sdl delay 1000 timestamp is %llu + %llu",timestamp , one_second_timestamp);
-
 				continue;
 			}else
 			{
@@ -2661,7 +2653,6 @@ static int read_thread(void *arg)
 							   "ijkplayer",
 							   "lmk seek to start",
 							   pfile);
-					//__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk seek to start");
 				}else
 				{
 					FILE * pfile = mediafile_downld_module_getlogfile(NULL);
@@ -2669,8 +2660,6 @@ static int read_thread(void *arg)
 							   "ijkplayer",
 							   "lmk seek to start already download",
 							   pfile);
-					//__android_log_print(ANDROID_LOG_INFO,"lmk test","lmk seek to start already download");
-
 					send_download_req(ffp, timestamp_2_blockIndex(timestamp + one_second_timestamp));
 				}
 			}
@@ -2818,7 +2807,6 @@ static int read_thread(void *arg)
 						   "ijkplayer",
 						   logbuf,
 						   pfile);
-				//__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk read packet to pause %llu",g_timestamp);
 			}
 			SDL_Delay(2000);
 			char logbuf[200] = {0};
@@ -2828,7 +2816,6 @@ static int read_thread(void *arg)
 					   "ijkplayer",
 					   logbuf,
 					   pfile);
-          //  __android_log_print(ANDROID_LOG_INFO,"lmk test","lmk the read frame is not download, sdl delay 2000 timestamp is %llu + %llu",g_timestamp , one_second_timestamp);
             continue;
 		}else
 		{
@@ -2844,11 +2831,15 @@ static int read_thread(void *arg)
 						   "ijkplayer",
 						   logbuf,
 						   pfile);
-				//__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk read packet to start %llu",g_timestamp);
 			}
 
 		}
-
+       /*if(is->videoq.nb_packets > 90)//add by lmk   减少预读包数量，尽快播放
+        {
+        	SDL_Delay(100);
+        	printf_log(LOG_WARN|LOG_FILE,"lmk test","lmk is->videoq.nb_packets > 90,减少预读包数量，尽快播放",NULL);
+        	continue;
+        }*/
         ret = av_read_frame(ic, pkt); // _test
 		if (ret >= 0) {
 			if (pkt->stream_index == is->video_stream) {
@@ -2866,7 +2857,6 @@ static int read_thread(void *arg)
 								   "ijkplayer",
 								   logbuf,
 								   pfile);
-						//__android_log_print(ANDROID_LOG_WARN,"lmk test","lmk av_read_frame pkt->pts is not Normal g_timestamp  %llu pkt->pts %llu ",g_timestamp, pkt->pts);
 						g_timestamp = pkt->pts;
 
 					}else
@@ -2957,6 +2947,8 @@ static int read_thread(void *arg)
         } else if (pkt->stream_index == is->video_stream && pkt_in_play_range
                    && !(is->video_st && (is->video_st->disposition & AV_DISPOSITION_ATTACHED_PIC))) {
             packet_queue_put(&is->videoq, pkt);
+
+
 #ifdef FFP_MERGE
         } else if (pkt->stream_index == is->subtitle_stream && pkt_in_play_range) {
             packet_queue_put(&is->subtitleq, pkt);

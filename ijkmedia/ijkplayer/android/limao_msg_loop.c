@@ -107,7 +107,7 @@ static void message_loop_x(ThreadLocalData_t *pData)
 	char logbuf[200] = {0};
 	FILE * g_mediafile_parse_log = NULL;
 	int quit = 0;
-
+	int* q2pQuit = NULL;
     while (1) {    	
     	if (quit == 1 || pData->playRequestTime != LimaoApi_get_playRequestTime())
     	{
@@ -144,6 +144,7 @@ static void message_loop_x(ThreadLocalData_t *pData)
         	mediafile_hash = param->fileHash;
         	suffix_name = param->filenameExtension;
         	g_mediafile_parse_log = param->logFile;
+        	q2pQuit = param->p2pQuit;
 			LimaoApi_bufferingUpdate(mediafile_hash, 0);
 
         	printf_log(LOG_WARN|LOG_FILE,
@@ -333,7 +334,8 @@ static void message_loop_x(ThreadLocalData_t *pData)
 			{
 				offset =(download_blockinfo_list+block_index)->offset  -1024;
 			}
-			LimaoApi_download(mediafile_hash, offset, LimaoApi_getFileSize(mediafile_hash));
+
+			LimaoApi_download(mediafile_hash, offset, LimaoApi_getFileSize(mediafile_hash)-offset);
 
 			if(!mediafile_downld_module_download_mediadatablock(g_downld_mediafile,block_index))
 			{
@@ -423,6 +425,7 @@ static void message_loop_M(JNIEnv *env)
             strcpy(newParam->fileHash, param->fileHash);
 			strcpy(newParam->filenameExtension, param->filenameExtension);
 			newParam->logFile = param->logFile;
+			newParam->p2pQuit = param->p2pQuit;
 			msg_queue_put_simple5(threadLocalData->msg_queue, LM_MSG_PREPARE_TO_PLAY, newParam);
             
             break;
