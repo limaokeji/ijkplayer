@@ -64,14 +64,14 @@ bool DownldMediaFile::Init(char * fileNamehash,char * suffix_name, char * playMe
 	pMediaFileDownldLog = plog_file;
 	return true;
 }
-int DownldMediaFile::P2pDownloadMediaData(long offset, int64_t blockSize)
+int DownldMediaFile::P2pDownloadMediaData(int64_t offset, int64_t blockSize)
 {
 	if(_mediaFileHash == NULL)
 	{
 		return -1;
 	}
 	char logbuf[200] ={0};
-	sprintf(logbuf,"offset %ld,  block size %llu",offset,blockSize);
+	sprintf(logbuf,"offset %lld,  block size %llu",offset,blockSize);
 	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
 						   "DownldMediaFile::P2pDownloadMediaData ",
 						   logbuf,
@@ -79,7 +79,7 @@ int DownldMediaFile::P2pDownloadMediaData(long offset, int64_t blockSize)
 	int ret =  LimaoApi_downloadExt(_mediaFileHash,offset,blockSize,&_quit, 1000);
 	if(ret != 0)
 	{
-		sprintf(logbuf,"offset %ld,  block size %llu  error %d",offset,blockSize,ret);
+		sprintf(logbuf,"offset %lld,  block size %llu  error %d",offset,blockSize,ret);
 		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 							   "p2p download file data",
 							   logbuf,

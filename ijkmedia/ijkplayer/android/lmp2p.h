@@ -131,6 +131,15 @@ LMP2P_API int NotifyWifi(int flag);
  */
 LMP2P_API int SetDownloadPath(const char* downloadPath);
 
+/**
+ * Get the path in which the downloaded files store
+ * @param downloadPath The destination path in which stored the downloaded files, utf-8 formatted,
+          Caller should allocate downloadPath memory and free it finally
+ * @param len downloadPath length
+ * @return 0 for success, non-zero if failed
+ */
+LMP2P_API int GetDownloadPath(char* downloadPath, const int len);
+
 
 // API defination for P2PService begin
 /**

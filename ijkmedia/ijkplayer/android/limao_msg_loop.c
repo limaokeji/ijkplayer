@@ -213,6 +213,8 @@ static void message_loop_x(ThreadLocalData_t *pData)
 
         	block_count = mediafile_downld_module_getmediadatalock_count(g_downld_mediafile);
 
+        	LimaoApi_download(mediafile_hash, 0, LimaoApi_getFileSize(mediafile_hash)); // _test
+
         	if(!mediafile_downld_module_download_mediadatablock(g_downld_mediafile,0))
         	{
 				printf_log(LOG_ERROR|LOG_FILE,
@@ -250,7 +252,7 @@ static void message_loop_x(ThreadLocalData_t *pData)
 			filePath =mediafile_downld_module_download_mediafilepath(g_downld_mediafile);
            	LimaoApi_prepareOK(mediafile_hash,filePath);
 
-			LimaoApi_download(mediafile_hash, 0, LimaoApi_getFileSize(mediafile_hash)); // _test
+
 
            	msg_queue_put_simple2(msg_queue, LM_MSG_P2P_DOWNLOAD_BLOCK, 3);
             break;

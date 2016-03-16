@@ -29,7 +29,9 @@ LOCAL_CFLAGS += -std=c99
 LOCAL_LDLIBS += -llog -landroid
 LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
 # add by lmk
-LOCAL_CFLAGS += -D_ANDROID
+LOCAL_CFLAGS += -D_ANDROID 
+LOCAL_CFLAGS += -D_FILE_OFFSET_BITS=64 # largefile  lseek64
+LOCAL_CFLAGS += -D_LARGEFILE64_SOURCE  # largefile  lseek64
 #LOCAL_CFLAGS += -Wno-error=format-security	
 LOCAL_CPPFLAGS += -fexceptions
 LOCAL_CPPFLAGS += -fpermissive

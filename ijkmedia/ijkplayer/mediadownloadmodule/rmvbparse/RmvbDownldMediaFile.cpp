@@ -154,7 +154,7 @@ bool RmvbDownldMediaFile::PraseRootBox()
 		return false;
 	}
 
-	if(0 != fseek(_pPlayerMediaFile, blockSize, SEEK_SET))
+	if(0 != lfseek(_pPlayerMediaFile, blockSize, SEEK_SET))
 	{
 		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 				   "rmvb download parse root box type and size",
@@ -231,7 +231,7 @@ bool RmvbDownldMediaFile::PraseRootBox()
 		{
 			return false;
 		}
-		if(0 != fseek(_pPlayerMediaFile, _current, SEEK_SET))
+		if(0 != lfseek(_pPlayerMediaFile, _current, SEEK_SET))
 		{
 			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 					   "rmvb download parse root box type and size",

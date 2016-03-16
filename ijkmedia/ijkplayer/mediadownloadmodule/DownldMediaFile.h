@@ -6,14 +6,14 @@
 #define MEDIAFILEPARSELEN  100
 #include <stdio.h>
 #include "DataType.h"
-
+#include "largefile.h"
 class DownldMediaFile
 {
 
 
 public:
 	//bool CopyFileData(long offset,  int64_t blockSize);
-	int P2pDownloadMediaData(long offset, int64_t blockSize);
+	int P2pDownloadMediaData(int64_t offset, int64_t blockSize);
 	DownldMediaFile();
 	~DownldMediaFile();
 	bool Init(char * inFileName,char * suffix_name, char * outFileName,uint64_t filesize,

@@ -17,7 +17,8 @@
 #include "ijksdl/ijksdl_log.h"
 #include "ijksdl/android/ijksdl_android_jni.h"
 #include "../mediadownloadmodule/mediafile_download_log.h"
-//#include "lmp2p.h"
+
+#include "lmp2p.h"
 #define JNI_CLASS_PLAY_MANAGER "com/limaoso/phonevideo/playmanager/PlayManager"
 
 typedef struct limao_api_fields_t {
@@ -152,6 +153,7 @@ void LimaoApi_stopP2pDownload(JNIEnv *env, jclass clazz,jstring strfileHash)
 	(*env)->ReleaseStringUTFChars(env, strfileHash, c_fileHash);
 	g_offset = 0;
 	g_blocksize = 0;
+
 }
 void LimaoApi_prepareOK(char *fileHash, char * filePath)
 {
@@ -230,7 +232,8 @@ int LimaoApi_download(char *fileHash, int64_t offset, int64_t size)
     }else
     {
     	char logbuf[300] = {0};
-    	ret = Download(fileHash, offset, size);
+    	int64_t tmpSize = 0;
+    	ret = Download(fileHash, offset, /*size*/tmpSize);// 0 mean to download to file end
 		sprintf(logbuf,"Download in offset : %llu, size  : %llu",offset, size);
 		printf_log(LOG_WARN|LOG_FILE,"ijk",logbuf,log_File);
 
@@ -374,7 +377,7 @@ int64_t LimaoApi_getFileSize(char *fileHash)
 	//int ret = 0;
 
 	JNIEnv *env = NULL;
-	int64_t fsize = 0;
+	int64_t fsize = 1;
 	if (g_env_flag == 1)
 	{
 		env = g_env;
@@ -393,6 +396,12 @@ int64_t LimaoApi_getFileSize(char *fileHash)
 	}else
 	{
 		fsize = GetFileSize(fileHash);
+		char logbuf[300] ={0};
+		sprintf(logbuf,"GetFileSize: fsize = %lld",fsize);
+		printf_log(LOG_INFO|LOG_FILE,
+				   "ijk",
+				   logbuf,
+				   log_File);
 	}
 
 

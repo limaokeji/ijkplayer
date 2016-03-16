@@ -114,7 +114,7 @@ bool MkvDownldMediaFile::PraseSeekInfoBlock(long offset, int64_t size, unsigned 
 	{
 		return false;
 	}
-	if (0 != fseek(_pPlayerMediaFile, offset, SEEK_SET))
+	if (0 != lfseek(_pPlayerMediaFile, offset, SEEK_SET))
 	{
 		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 				   "mkv download parse root box type and size",
@@ -539,7 +539,7 @@ bool MkvDownldMediaFile::GetDownloadOffset(long blockOffset, int64_t blockSize)
 	unsigned char blockSizeBuf[10] = { 0 };
 	int idLen = 0;
 	int blockSizeBufLen = 0;
-	if (0 != fseek(_pPlayerMediaFile, blockOffset, SEEK_SET))
+	if (0 != lfseek(_pPlayerMediaFile, blockOffset, SEEK_SET))
 	{
 		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 				   "mkv download parse root box type and size",
@@ -691,7 +691,7 @@ bool MkvDownldMediaFile::PraseRootBox()
 		return false;
 	}
 
-	if (0 != fseek(_pPlayerMediaFile,(long) _current, SEEK_SET))
+	if (0 != lfseek(_pPlayerMediaFile,(long) _current, SEEK_SET))
 	{
 		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 				   "mkv download parse root box type and size",
@@ -748,7 +748,7 @@ bool MkvDownldMediaFile::PraseRootBox()
 		{
 			return false;
 		}
-		if (0 != fseek(_pPlayerMediaFile, _current, SEEK_SET))
+		if (0 != lfseek(_pPlayerMediaFile, _current, SEEK_SET))
 		{
 			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 					   "mkv download parse root box type and size",
@@ -1012,7 +1012,7 @@ bool MkvDownldMediaFile::DownloadFileFirst()
 	memset(blockSizeBuf, 0, 10);
 	idLen = 0;
 	blockSizeBufLen = 0;
-	if (0 != fseek(_pPlayerMediaFile, _cueingDataBlockOffset, SEEK_SET))
+	if (0 != lfseek(_pPlayerMediaFile, _cueingDataBlockOffset, SEEK_SET))
 	{
 		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 				   "mkv download parse root box type and size",

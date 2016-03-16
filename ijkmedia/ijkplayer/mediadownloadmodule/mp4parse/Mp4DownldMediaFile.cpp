@@ -158,7 +158,7 @@ bool Mp4DownldMediaFile::PraseRootBox()
 		return false;
 	}
 
-	if(0 !=fseek(_pPlayerMediaFile,0,SEEK_SET))
+	if(0 !=lfseek(_pPlayerMediaFile,0,SEEK_SET))
 	{
 		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 				   "mp4 download parse root box type and size",
@@ -189,7 +189,7 @@ bool Mp4DownldMediaFile::PraseRootBox()
 		return false;
 	}
 
-	if(0 != fseek(_pPlayerMediaFile, blockSize, SEEK_SET))
+	if(0 != lfseek(_pPlayerMediaFile, blockSize, SEEK_SET))
 	{
 		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 				   "mp4 download parse root box type and size",
@@ -197,7 +197,7 @@ bool Mp4DownldMediaFile::PraseRootBox()
 				   	pMediaFileDownldLog);
 		return false;
 	}
-	_current = ftell(_pPlayerMediaFile);
+	_current = lftell(_pPlayerMediaFile);
 	_ftypBlockSize = blockSize;
 	int64_t read_len = 0;
 	while (_current < _end)
@@ -279,7 +279,7 @@ bool Mp4DownldMediaFile::PraseRootBox()
 			return false;
 		}
 
-		if(0 != fseek(_pPlayerMediaFile, _current, SEEK_SET))
+		if(0 != lfseek(_pPlayerMediaFile, _current, SEEK_SET))
 		{
 			printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
 					   "mp4 download parse root box type and size",
