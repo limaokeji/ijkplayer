@@ -63,67 +63,15 @@ LOCAL_SRC_FILES += android/pipeline/ffpipenode_android_mediacodec_vdec.c
 LOCAL_SRC_FILES += android/pipeline/ffpipenode_android_mediacodec_vout.c
 
 # add by lmk
-LOCAL_SRC_FILES += 	 mediadownloadmodule/mp4parse/sources/3gp.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_amr.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_avc1.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_avcC.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_d263.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_damr.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_dref.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_elst.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_enca.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_encv.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_free.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_ftyp.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_hdlr.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_hinf.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_hnti.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_href.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_mdat.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_mdhd.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_meta.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_mp4s.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_mp4v.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_mvhd.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_ohdr.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_root.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_rtp.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_s263.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_sdp.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_smi.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_sound.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_standard.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_stbl.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_stdp.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_stsc.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_stsd.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_stsz.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_tfhd.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_tkhd.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_treftype.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_trun.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_udta.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_url.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_urn.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_video.cpp \
-			 mediadownloadmodule/mp4parse/sources/atom_vmhd.cpp \
-			 mediadownloadmodule/mp4parse/sources/descriptors.cpp \
-			 mediadownloadmodule/mp4parse/sources/isma.cpp \
-			 mediadownloadmodule/mp4parse/sources/mp4atom.cpp \
-			 mediadownloadmodule/mp4parse/sources/mp4container.cpp \
-			 mediadownloadmodule/mp4parse/sources/mp4.cpp \
-			 mediadownloadmodule/mp4parse/sources/mp4descriptor.cpp \
-			 mediadownloadmodule/mp4parse/sources/mp4file.cpp \
-			 mediadownloadmodule/mp4parse/sources/mp4file_io.cpp \
-			 mediadownloadmodule/mp4parse/sources/mp4info.cpp \
-			 mediadownloadmodule/mp4parse/sources/mp4meta.cpp \
-			 mediadownloadmodule/mp4parse/sources/mp4property.cpp \
-			 mediadownloadmodule/mp4parse/sources/mp4track.cpp \
-			 mediadownloadmodule/mp4parse/sources/mp4util.cpp \
-			 mediadownloadmodule/mp4parse/sources/ocidescriptors.cpp \
-			 mediadownloadmodule/mp4parse/sources/odcommands.cpp \
-			 mediadownloadmodule/mp4parse/sources/qosqualifiers.cpp \
-			 mediadownloadmodule/mp4parse/sources/rtphint.cpp \
+LOCAL_SRC_FILES += 	 mediadownloadmodule/mp4parse/mp4parse/Atom.cpp \
+			 mediadownloadmodule/mp4parse/mp4parse/Mp4Parse.cpp \
+			 mediadownloadmodule/mp4parse/mp4parse/Stbl.cpp \
+			 mediadownloadmodule/mp4parse/mp4parse/Stco.cpp \
+			 mediadownloadmodule/mp4parse/mp4parse/Stsc.cpp \
+			 mediadownloadmodule/mp4parse/mp4parse/Stsd.cpp \
+			 mediadownloadmodule/mp4parse/mp4parse/Stss.cpp \
+			 mediadownloadmodule/mp4parse/mp4parse/Stsz.cpp \
+			 mediadownloadmodule/mp4parse/mp4parse/Stts.cpp \
 			 mediadownloadmodule/mp4parse/Mp4DownldMediaFile.cpp \
 			 mediadownloadmodule/rmvbparse/RmvbDownldMediaFile.cpp \
 			 mediadownloadmodule/mkvparse/MkvDownldMediaFile.cpp \

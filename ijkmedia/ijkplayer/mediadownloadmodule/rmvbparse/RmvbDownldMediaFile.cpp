@@ -13,7 +13,7 @@ RmvbDownldMediaFile::RmvbDownldMediaFile()
 	_contBlockOffset = 0;
 	_contBlockSize = 0;
 
-	memset(_mdprBlockOffset, 0, sizeof(_mdprBlockOffset));
+	memset(_mdprBlockOffset, 0, sizeof(int64_t)*10);
 	memset(_mdprBlockSize, 0, sizeof(_mdprBlockSize));
 	_mdprBlockCount = 0;
 

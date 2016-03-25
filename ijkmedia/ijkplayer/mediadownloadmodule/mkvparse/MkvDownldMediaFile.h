@@ -15,37 +15,37 @@ class MkvDownldMediaFile :public DownldMediaFile
 private:
 	int64_t _ebmlHeaderBlockSize; //root block
 
-	long _segmentBlockOffset;	//root block
+	int64_t _segmentBlockOffset;	//root block
 	int64_t _segmentBlockSize;
 
-	long _metaSeekInfoBlockOffset; //child block
+	int64_t _metaSeekInfoBlockOffset; //child block
 	int64_t _metaSeekInfoBlockSize;
 
-	long _segmentInfoBlockOffset;//child block
+	int64_t _segmentInfoBlockOffset;//child block
 	int64_t _segmentInfoBlockSize;
 
-	long _trackBlockOffset;//child block
+	int64_t _trackBlockOffset;//child block
 	int64_t _trackBlockSize;
 
-	long _chaptersBlockOffset;//child block
+	int64_t _chaptersBlockOffset;//child block
 	int64_t _chaptersBlockSize;
 
-	long _clustersBlockOffset;//child block the audio video data
+	int64_t _clustersBlockOffset;//child block the audio video data
 	int64_t _clustersBlockSize;
-	long _firstClustersBlockOffset;
+	int64_t _firstClustersBlockOffset;
 	int64_t _allClustersBlockSize;
 
-	long _cueingDataBlockOffset;//child block  Contain the key frame infomation
+	int64_t _cueingDataBlockOffset;//child block  Contain the key frame infomation
 	int64_t _cueingDataBlockSize; 
 
-	long _attachmentBlockOffset;//child block
+	int64_t _attachmentBlockOffset;//child block
 	int64_t _attachmentBlockSize;
 
-	long _taggingBlockOffset;//child block
+	int64_t _taggingBlockOffset;//child block
 	int64_t _taggingBlockSize;
 
 	int _otherBlockCount;
-	long _otherBlcokOffset[10];
+	int64_t _otherBlcokOffset[10];
 	int64_t _otherBlockSize[10];
 
 	int64_t _current;

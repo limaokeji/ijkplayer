@@ -36,7 +36,7 @@ MkvDownldMediaFile::MkvDownldMediaFile()
 	_taggingBlockSize = 0;
 
 	_otherBlockCount = 0;
-	memset(_otherBlcokOffset,0,sizeof(long));
+	memset(_otherBlcokOffset,0,sizeof(int64_t));
 	memset(_otherBlockSize,0,sizeof(int64_t));
 	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
 			_mediaFileHash,

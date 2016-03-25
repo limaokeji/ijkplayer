@@ -25,7 +25,14 @@ inline int lfseek(FILE* fp, int64_t offset, int mode)
 #ifdef WIN32
     return _fseeki64(fp, offset, mode);
 #else
-    return fseeko(fp, offset, mode);
+
+
+	setbuf(fp, NULL); //clear fread buffer
+	if (lseek64(fileno(fp), offset, mode) == -1)
+	{
+		return -1;
+	}
+	return 0;
 #endif
 }
 

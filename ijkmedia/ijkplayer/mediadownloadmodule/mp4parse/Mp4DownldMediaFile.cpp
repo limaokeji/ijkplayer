@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #endif
 #include "Mp4DownldMediaFile.h"
-#include "./sources/mp4.h"
+#include "mp4parse/Mp4Parse.h"
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -12,7 +12,7 @@
 Mp4DownldMediaFile::Mp4DownldMediaFile()
 {
 	_freeBlockCount = 0;
-	memset((void *)_freeBlockOffset, 0, sizeof(long)* 10);
+	memset((void *)_freeBlockOffset, 0, sizeof(int64_t)* 10);
 	memset((void *)_freeBlockSize, 0, sizeof(int64_t)* 10);
 	_moovBlockOffset = 0;
 	_moovBlockSize = 0;
@@ -197,7 +197,7 @@ bool Mp4DownldMediaFile::PraseRootBox()
 				   	pMediaFileDownldLog);
 		return false;
 	}
-	_current = lftell(_pPlayerMediaFile);
+	_current = blockSize;
 	_ftypBlockSize = blockSize;
 	int64_t read_len = 0;
 	while (_current < _end)
@@ -300,106 +300,27 @@ bool Mp4DownldMediaFile::PraseRootBox()
 
 bool Mp4DownldMediaFile::GetDownloadOffset()
 {
-	u_int32_t verbosity = MP4_DETAILS_ERROR;
 
-	// open the mp4 file, and read meta-info
-	char * outFileName = GetPlayFileNamePath();
-
-
-	fseek(_pPlayerMediaFile, 0, SEEK_SET);
-
-	MP4FileHandle mp4File = MP4Read(outFileName, _pPlayerMediaFile, verbosity);
-
-	if (mp4File == NULL)
+	CMp4Parse mp4Parse;
+	if(0 > mp4Parse.Init(NULL, _pPlayerMediaFile))
 	{
-		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
-				   "get download offset info",
-				   "mp4 parse class create failed.\n",
-				   	pMediaFileDownldLog);
+		 __android_log_print(ANDROID_LOG_ERROR,"lmk mp4 parse", "lmk %d  | %s ",__LINE__,__FILE__);
 		return false;
 	}
-	u_int8_t profileLevel = MP4GetVideoProfileLevel(mp4File);
-
-	// get a handle on the first video track
-	MP4TrackId trackId = MP4FindTrackId(mp4File, 0, "video");
-
-	// gather the crucial track information 
-	u_int32_t timeScale = MP4GetTrackTimeScale(mp4File, trackId);
-
-	// note all times and durations 
-	// are in units of the track time scale
-	MP4Duration trackDuration = MP4GetTrackDuration(mp4File, trackId);
-
-	u_int8_t* pConfig;
-	u_int32_t configSize = 0;
-
-	MP4GetTrackESConfiguration(mp4File, trackId, &pConfig, &configSize);
-
-	// initialize decoder with Elementary Stream (ES) configuration
-
-	// done with our copy of ES configuration
-	free(pConfig);
-
-	// now consecutively read and display the track samples
-
-	MP4SampleId sampleId = 1;
-	u_int64_t sampleFileOffset = 0;
-	MP4Timestamp sampleTimestamp;
-
-	u_int32_t syncSampleCount = MP4GetSyncSampleCount(mp4File,
-		trackId);
-
-	if (syncSampleCount <= 0)
+	_syncSampleCount = mp4Parse.GetVideoKeyFrameCount() -1;
+	if (_syncSampleCount <= 0)
 	{
-		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
-				   "get download offset info",
-				   "mp4 parse class create failed.\n",
-				   	pMediaFileDownldLog);
+		 __android_log_print(ANDROID_LOG_ERROR,"lmk mp4 parse", "lmk %d  | %s ",__LINE__,__FILE__);
 		return false;
 	}
-	_syncSampleCount = syncSampleCount - 1;
-	_downloadBlockInfoList = new DOWNLOADBLOCKINFO[syncSampleCount];
-	if(_downloadBlockInfoList == NULL)
+	_downloadBlockInfoList = new DOWNLOADBLOCKINFO[_syncSampleCount+1];
+	if (0 > mp4Parse.GetVideoKeyFrame(_downloadBlockInfoList))
 	{
-		printf_log(pMediaFileDownldLog == NULL ? LOG_ERROR : LOG_ERROR|LOG_FILE,
-				   "get download offset info",
-				   "_downloadBlockInfoList alloc failed.\n",
-				   	pMediaFileDownldLog);
+		 __android_log_print(ANDROID_LOG_ERROR,"lmk mp4 parse", "lmk %d  | %s ",__LINE__,__FILE__);
+		return false;
 	}
-	int index = 0;
-	memset(_downloadBlockInfoList, 0, sizeof(DOWNLOADBLOCKINFO)*syncSampleCount);
-
-	do
-	{
-		sampleId = MP4GetNextSyncSampleId(
-			mp4File,
-			trackId,
-			sampleId);
-		if (sampleId != MP4_INVALID_SAMPLE_ID)
-		{
-			sampleFileOffset = MP4GetSampleFileOffset(mp4File, trackId, sampleId);
-			sampleTimestamp = MP4GetSampleTime(mp4File, trackId, sampleId);
-			_downloadBlockInfoList[index].smapleId = sampleId;
-			_downloadBlockInfoList[index].offset = sampleFileOffset;
-			_downloadBlockInfoList[index].timeStamp = sampleTimestamp;
-			//_downloadBlockInfoList[index].timeToSecond = sampleTimestamp / timeScale;
-			_downloadBlockInfoList[index].isDownload = false;
-			//_downloadBlockInfoList[index].isRequest = false;
-
-			index++;
-
-		}
-
-
-	} while (sampleId != MP4_INVALID_SAMPLE_ID);
-
-	printf_log(pMediaFileDownldLog == NULL ? LOG_INFO : LOG_INFO|LOG_FILE,
-			   "get download offset info",
-			   "create the offset info list success.\n",
-			   	pMediaFileDownldLog);
-
-	//MP4Close(mp4File);
 	return true;
+
 }
 
 bool Mp4DownldMediaFile::DownloadFileFirst()

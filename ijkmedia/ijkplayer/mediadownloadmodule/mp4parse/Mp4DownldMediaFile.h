@@ -17,12 +17,12 @@ class Mp4DownldMediaFile :public DownldMediaFile
 {
 private:
 	int64_t _ftypBlockSize;
-	long _freeBlockOffset[10];
+	int64_t _freeBlockOffset[10];
 	int64_t _freeBlockSize[10];
 	int _freeBlockCount;
-	long _moovBlockOffset;
+	int64_t _moovBlockOffset;
 	int64_t _moovBlockSize;
-	long _mdatBlockOffset;
+	int64_t _mdatBlockOffset;
 	int64_t _mdatBlockSize;
 	int64_t _current;
 	int64_t _end;

@@ -15,19 +15,19 @@ class RmvbDownldMediaFile :public DownldMediaFile
 private:
 	int64_t _propBlockSize;
 
-	long    _contBlockOffset;
+	int64_t    _contBlockOffset;
 	int64_t _contBlockSize;
 
-	long	_mdprBlockOffset[10];
+	int64_t	_mdprBlockOffset[10];
 	int64_t _mdprBlockSize[10];
 	int _mdprBlockCount;
 
-	long _dataBlockOffset[10];
+	int64_t _dataBlockOffset[10];
 	int64_t _dataBlockSize[10];
 	int _dataBlockCount;
 
 
-	long _indxBlockOffset[10];
+	int64_t _indxBlockOffset[10];
 	int64_t _indxBlockSize[10];
 	int _indxBlockCount;
 
