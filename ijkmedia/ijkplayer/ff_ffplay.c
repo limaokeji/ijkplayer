@@ -2339,16 +2339,25 @@ static int read_thread(void *arg)
     is->last_subtitle_stream = is->subtitle_stream = -1;
 #endif
     is->eof = 0;
-
-
-   // g_timestamp = 0; // add by lmk
     FILE * pfile = mediafile_downld_module_getlogfile(NULL);
     char logbuf[200] = {0};
-	sprintf(logbuf,"read_thread init, time stamp %llu",g_timestamp);
+	sprintf(logbuf,"lmk isLimaoplaymode %d",ffp->isLimaoPlayMode );
 	printf_log(LOG_WARN|LOG_FILE,
 			   "ijkplayer",
 			   logbuf,
 			   pfile);
+	if(ffp->isLimaoPlayMode == 1)
+	{
+		   // g_timestamp = 0; // add by lmk
+
+		    char logbuf[200] = {0};
+			sprintf(logbuf,"read_thread init, time stamp %llu",g_timestamp);
+			printf_log(LOG_WARN|LOG_FILE,
+					   "ijkplayer",
+					   logbuf,
+					   pfile);
+	}
+
 	 g_timestamp = 0; // add by lmk
 
     ic = avformat_alloc_context();
@@ -2564,19 +2573,24 @@ static int read_thread(void *arg)
         ffp_notify_msg1(ffp, FFP_REQ_START);
         ffp->auto_resume = 0;
     }
-    DOWNLOADBLOCKINFO * download_blockinfo_list = mediafile_downld_module_getblocklistinfo(NULL);
-    if(download_blockinfo_list != NULL)
+    if(ffp->isLimaoPlayMode == 1)
     {
-    	keyframe_time_interval = (download_blockinfo_list+11)->timeStamp -  (download_blockinfo_list+10)->timeStamp;
-    	keyframe_time_interval = keyframe_time_interval *2;
-        printf_log(LOG_WARN,"lmk test","lmk read thread keyframe_time_interval : %llu",NULL);
-    }else
-    {
-    	 printf_log(LOG_ERROR,"lmk test","lmk read thread keyframe_time_interval erroe",NULL);
+        DOWNLOADBLOCKINFO * download_blockinfo_list = mediafile_downld_module_getblocklistinfo(NULL);
+        if(download_blockinfo_list != NULL)
+        {
+        	keyframe_time_interval = (download_blockinfo_list+11)->timeStamp -  (download_blockinfo_list+10)->timeStamp;
+        	keyframe_time_interval = keyframe_time_interval *2;
+            printf_log(LOG_WARN,"lmk test","lmk read thread keyframe_time_interval : %llu",NULL);
+        }else
+        {
+        	 printf_log(LOG_ERROR,"lmk test","lmk read thread keyframe_time_interval erroe",NULL);
+        }
+        one_second_timestamp = (1 / AV_TIME_BASE) / av_q2d(ic->streams[AVMEDIA_TYPE_VIDEO]->time_base);;//add by lmk
     }
 
 
-    one_second_timestamp = (1 / AV_TIME_BASE) / av_q2d(ic->streams[AVMEDIA_TYPE_VIDEO]->time_base);;//add by lmk
+
+
     for (;;) {
         if (is->abort_request)
             break;
@@ -2605,66 +2619,68 @@ static int read_thread(void *arg)
             int64_t seek_target = is->seek_pos;
             int64_t seek_min    = is->seek_rel > 0 ? seek_target - is->seek_rel + 2: INT64_MIN;
             int64_t seek_max    = is->seek_rel < 0 ? seek_target - is->seek_rel - 2: INT64_MAX;
-
-            int64_t timestamp =  (seek_target / AV_TIME_BASE) / av_q2d(ic->streams[AVMEDIA_TYPE_VIDEO]->time_base);
-            FILE * pfile = mediafile_downld_module_getlogfile(NULL);
-            char logbuf[200] = {0};
-			sprintf(logbuf,"lmk seek req: seek target is %llu, time stamp %llu", seek_target,timestamp);
-			printf_log(LOG_INFO|LOG_FILE,
-					   "ijkplayer",
-					   logbuf,
-					   pfile);
-            one_second_timestamp = 0;
-            if (!isBlockDownload(timestamp + one_second_timestamp)) // FIXME
-			{
-            	FILE * pfile = mediafile_downld_module_getlogfile(NULL);
-    			printf_log(LOG_INFO|LOG_FILE,
-    					   "ijkplayer",
-    					   "lmk seek is not BlockDownload send_download_req",
-    					   pfile);
-				send_download_req(ffp, timestamp_2_blockIndex(timestamp + one_second_timestamp));
-				if(ffp->is->pause_req == 0)
-				{
-					limao_player_pause_start(ffp, 1);   //pause
-					seek_pause = 1;
-					pfile = mediafile_downld_module_getlogfile(NULL);
-	    			printf_log(LOG_WARN|LOG_FILE,
-	    					   "ijkplayer",
-	    					   "mk seek to pause",
-	    					   pfile);
-				}
-				SDL_Delay(1000);
-				pfile = mediafile_downld_module_getlogfile(NULL);
-				sprintf(logbuf,"lmk seek to time  is not download, sdl delay 1000 timestamp is %llu + %llu",timestamp , one_second_timestamp);
-				printf_log(LOG_INFO|LOG_FILE,
-						   "ijkplayer",
-						   logbuf,
-						   pfile);
-				continue;
-			}else
-			{
-
-				if(seek_pause == 1)
-				{
-					limao_player_pause_start(ffp, 0);   // start
-					seek_pause = 0;
+            if(ffp->isLimaoPlayMode == 1)  //add by lmk
+            {
+					int64_t timestamp =  (seek_target / AV_TIME_BASE) / av_q2d(ic->streams[AVMEDIA_TYPE_VIDEO]->time_base);
 					FILE * pfile = mediafile_downld_module_getlogfile(NULL);
-					printf_log(LOG_WARN|LOG_FILE,
+					char logbuf[200] = {0};
+					sprintf(logbuf,"lmk seek req: seek target is %llu, time stamp %llu", seek_target,timestamp);
+					printf_log(LOG_INFO|LOG_FILE,
 							   "ijkplayer",
-							   "lmk seek to start",
+							   logbuf,
 							   pfile);
-				}else
-				{
-					FILE * pfile = mediafile_downld_module_getlogfile(NULL);
-					printf_log(LOG_WARN|LOG_FILE,
-							   "ijkplayer",
-							   "lmk seek to start already download",
-							   pfile);
-					send_download_req(ffp, timestamp_2_blockIndex(timestamp + one_second_timestamp));
-				}
-			}
-// FIXME the +-2 is due to rounding being not done in the correct direction in generation
-//      of the seek_pos/seek_rel variables
+					one_second_timestamp = 0;
+					if (!isBlockDownload(timestamp + one_second_timestamp)) // FIXME
+					{
+						FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+						printf_log(LOG_INFO|LOG_FILE,
+								   "ijkplayer",
+								   "lmk seek is not BlockDownload send_download_req",
+								   pfile);
+						send_download_req(ffp, timestamp_2_blockIndex(timestamp + one_second_timestamp));
+						if(ffp->is->pause_req == 0)
+						{
+							limao_player_pause_start(ffp, 1);   //pause
+							seek_pause = 1;
+							pfile = mediafile_downld_module_getlogfile(NULL);
+							printf_log(LOG_WARN|LOG_FILE,
+									   "ijkplayer",
+									   "mk seek to pause",
+									   pfile);
+						}
+						SDL_Delay(1000);
+						pfile = mediafile_downld_module_getlogfile(NULL);
+						sprintf(logbuf,"lmk seek to time  is not download, sdl delay 1000 timestamp is %llu + %llu",timestamp , one_second_timestamp);
+						printf_log(LOG_INFO|LOG_FILE,
+								   "ijkplayer",
+								   logbuf,
+								   pfile);
+						continue;
+					}else
+					{
+
+						if(seek_pause == 1)
+						{
+							limao_player_pause_start(ffp, 0);   // start
+							seek_pause = 0;
+							FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+							printf_log(LOG_WARN|LOG_FILE,
+									   "ijkplayer",
+									   "lmk seek to start",
+									   pfile);
+						}else
+						{
+							FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+							printf_log(LOG_WARN|LOG_FILE,
+									   "ijkplayer",
+									   "lmk seek to start already download",
+									   pfile);
+							send_download_req(ffp, timestamp_2_blockIndex(timestamp + one_second_timestamp));
+						}
+					}
+			}//end if   ffp->isLimaoPlayMode == 1
+			// FIXME the +-2 is due to rounding being not done in the correct direction in generation
+			//      of the seek_pos/seek_rel variables
 
             ffp_toggle_buffering(ffp, 1);
             ret = avformat_seek_file(is->ic, -1, seek_min, seek_target, seek_max, is->seek_flags);
@@ -2791,49 +2807,52 @@ static int read_thread(void *arg)
             }
         }
         pkt->flags = 0;
-
-		if (!isBlockDownload(g_timestamp + one_second_timestamp)) // FIXME
-		{
-			av_log(ffp, AV_LOG_ERROR, "read_thread(): av_read_frame(): ret = -112233\n");
-			if(ffp->is->pause_req == 0)
+        if(ffp->isLimaoPlayMode == 1) //add by lmk
+        {
+			if (!isBlockDownload(g_timestamp + one_second_timestamp)) // FIXME
 			{
-				limao_player_pause_start(ffp, 1);   // pause
-				read_packet_pause = 1;
+				av_log(ffp, AV_LOG_ERROR, "read_thread(): av_read_frame(): ret = -112233\n");
+				if(ffp->is->pause_req == 0)
+				{
+					limao_player_pause_start(ffp, 1);   // pause
+					read_packet_pause = 1;
 
-				FILE * pfile = mediafile_downld_module_getlogfile(NULL);
-				char logbuf[100] = {0};
-				sprintf(logbuf,"lmk read packet to pause %llu",g_timestamp);
-				printf_log(LOG_WARN|LOG_FILE,
-						   "ijkplayer",
-						   logbuf,
-						   pfile);
-			}
-			SDL_Delay(2000);
-			char logbuf[200] = {0};
-			FILE * pfile = mediafile_downld_module_getlogfile(NULL);
-			sprintf(logbuf,"lmk the read frame is not download, sdl delay 2000 timestamp is %llu + %llu",g_timestamp , one_second_timestamp);
-			printf_log(LOG_INFO|LOG_FILE,
-					   "ijkplayer",
-					   logbuf,
-					   pfile);
-            continue;
-		}else
-		{
-
-			if(read_packet_pause == 1)
-			{
-				limao_player_pause_start(ffp, 0);   // start
-				read_packet_pause = 0;
-				FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+					FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+					char logbuf[100] = {0};
+					sprintf(logbuf,"lmk read packet to pause %llu",g_timestamp);
+					printf_log(LOG_WARN|LOG_FILE,
+							   "ijkplayer",
+							   logbuf,
+							   pfile);
+				}
+				SDL_Delay(2000);
 				char logbuf[200] = {0};
-				sprintf(logbuf,"lmk read packet to start %llu",g_timestamp);
-				printf_log(LOG_WARN|LOG_FILE,
+				FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+				sprintf(logbuf,"lmk the read frame is not download, sdl delay 2000 timestamp is %llu + %llu",g_timestamp , one_second_timestamp);
+				printf_log(LOG_INFO|LOG_FILE,
 						   "ijkplayer",
 						   logbuf,
 						   pfile);
+				continue;
+			}else
+			{
+
+				if(read_packet_pause == 1)
+				{
+					limao_player_pause_start(ffp, 0);   // start
+					read_packet_pause = 0;
+					FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+					char logbuf[200] = {0};
+					sprintf(logbuf,"lmk read packet to start %llu",g_timestamp);
+					printf_log(LOG_WARN|LOG_FILE,
+							   "ijkplayer",
+							   logbuf,
+							   pfile);
+				}
+
 			}
 
-		}
+        }//end if(ffp->isLimaoPlayMode == 1)
        /*if(is->videoq.nb_packets > 90)//add by lmk   减少预读包数量，尽快播放
         {
         	SDL_Delay(100);
@@ -2842,54 +2861,57 @@ static int read_thread(void *arg)
         }*/
         ret = av_read_frame(ic, pkt); // _test
 		if (ret >= 0) {
-			if (pkt->stream_index == is->video_stream) {
+
+			if(ffp->isLimaoPlayMode == 1){ //add by lmk
+				if (pkt->stream_index == is->video_stream) {
 
 
 
-				if(pkt->pts > g_timestamp)
-				{
-					if((pkt->pts - g_timestamp) > keyframe_time_interval)
+					if(pkt->pts > g_timestamp)
 					{
-						FILE * pfile = mediafile_downld_module_getlogfile(NULL);
-						char logbuf[200] = {0};
-						sprintf(logbuf,"lmk av_read_frame pkt->pts is not Normal g_timestamp  %llu pkt->pts %llu ",g_timestamp, pkt->pts);
-						printf_log(LOG_WARN|LOG_FILE,
-								   "ijkplayer",
-								   logbuf,
-								   pfile);
-						g_timestamp = pkt->pts;
+						if((pkt->pts - g_timestamp) > keyframe_time_interval)
+						{
+							FILE * pfile = mediafile_downld_module_getlogfile(NULL);
+							char logbuf[200] = {0};
+							sprintf(logbuf,"lmk av_read_frame pkt->pts is not Normal g_timestamp  %llu pkt->pts %llu ",g_timestamp, pkt->pts);
+							printf_log(LOG_WARN|LOG_FILE,
+									   "ijkplayer",
+									   logbuf,
+									   pfile);
+							g_timestamp = pkt->pts;
+
+						}else
+						{
+							g_timestamp = pkt->pts;
+						}
 
 					}else
 					{
 						g_timestamp = pkt->pts;
 					}
 
-				}else
-				{
-					g_timestamp = pkt->pts;
-				}
-
-			}
+				}//end pkt->stream_index == is->video_stream
+			}// end ffp->isLimaoPlayMode == 1
 		}
 
-        if(is_log_time_stamp)
-        {
-        	if(pTimeStampFileLog == NULL)
-        	{
-        		pTimeStampFileLog =fopen("/sdcard/limao/timeStampLog.txt","w+");
-        	}
+		if(is_log_time_stamp)
+		{
+			if(pTimeStampFileLog == NULL)
+			{
+				pTimeStampFileLog =fopen("/sdcard/limao/timeStampLog.txt","w+");
+			}
 
-        	if(pTimeStampFileLog != NULL)
-        	{
-        		if(pkt->stream_index == is->video_stream)
-        		{
-        			fprintf(pTimeStampFileLog,"av_read_frame VIDEO pts %llu,pos %llu\n",pkt->pts,pkt->pos);
-        		}else
-        		{
-        			fprintf(pTimeStampFileLog,"------------>av_read_frame OTHER pts %llu,pos %llu\n",pkt->pts,pkt->pos);
-        		}
-        	}
-        }
+			if(pTimeStampFileLog != NULL)
+			{
+				if(pkt->stream_index == is->video_stream)
+				{
+					fprintf(pTimeStampFileLog,"av_read_frame VIDEO pts %llu,pos %llu\n",pkt->pts,pkt->pos);
+				}else
+				{
+					fprintf(pTimeStampFileLog,"------------>av_read_frame OTHER pts %llu,pos %llu\n",pkt->pts,pkt->pos);
+				}
+			}
+		}
         if (ret < 0) {
             if ((ret == AVERROR_EOF || avio_feof(ic->pb)) && !is->eof) {
                 if (is->video_stream >= 0)
